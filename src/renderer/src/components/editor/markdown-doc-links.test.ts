@@ -156,6 +156,86 @@ describe('resolveMarkdownDocLink', () => {
       status: 'missing'
     })
   })
+
+  it('resolves bare slug prefixes like AgDR-0027 to slugged filenames', () => {
+    const ofmDocs: MarkdownDocument[] = [
+      {
+        filePath: '/repo/docs/decisions/AgDR-0027-platform-companies-and-persons.md',
+        relativePath: 'docs/decisions/AgDR-0027-platform-companies-and-persons.md',
+        basename: 'AgDR-0027-platform-companies-and-persons.md',
+        name: 'AgDR-0027-platform-companies-and-persons'
+      },
+      {
+        filePath: '/repo/.tasks/T458-org-and-engagement-model.md',
+        relativePath: '.tasks/T458-org-and-engagement-model.md',
+        basename: 'T458-org-and-engagement-model.md',
+        name: 'T458-org-and-engagement-model'
+      }
+    ]
+    const index = createMarkdownDocumentIndex(ofmDocs)
+
+    expect(resolveMarkdownDocLink('AgDR-0027', index)).toMatchObject({
+      status: 'resolved',
+      document: { relativePath: 'docs/decisions/AgDR-0027-platform-companies-and-persons.md' }
+    })
+    expect(resolveMarkdownDocLink('agdr-0027', index)).toMatchObject({
+      status: 'resolved',
+      document: { relativePath: 'docs/decisions/AgDR-0027-platform-companies-and-persons.md' }
+    })
+    expect(resolveMarkdownDocLink('T458', index)).toMatchObject({
+      status: 'resolved',
+      document: { relativePath: '.tasks/T458-org-and-engagement-model.md' }
+    })
+    expect(resolveMarkdownDocLink('t458', index)).toMatchObject({
+      status: 'resolved',
+      document: { relativePath: '.tasks/T458-org-and-engagement-model.md' }
+    })
+  })
+
+  it('resolves frontmatter aliases to the declaring document', () => {
+    const ofmDocs: MarkdownDocument[] = [
+      {
+        filePath: '/repo/docs/decisions/AgDR-0027-platform-companies.md',
+        relativePath: 'docs/decisions/AgDR-0027-platform-companies.md',
+        basename: 'AgDR-0027-platform-companies.md',
+        name: 'AgDR-0027-platform-companies',
+        aliases: ['Operator Gate', 'Platform Companies']
+      }
+    ]
+    const index = createMarkdownDocumentIndex(ofmDocs)
+
+    expect(resolveMarkdownDocLink('Operator Gate', index)).toMatchObject({
+      status: 'resolved',
+      document: { relativePath: 'docs/decisions/AgDR-0027-platform-companies.md' }
+    })
+    expect(resolveMarkdownDocLink('operator gate', index)).toMatchObject({
+      status: 'resolved',
+      document: { relativePath: 'docs/decisions/AgDR-0027-platform-companies.md' }
+    })
+  })
+
+  it('disambiguates slug prefix matches preferring non-archived and shorter paths', () => {
+    const ofmDocs: MarkdownDocument[] = [
+      {
+        filePath: '/repo/archive/decisions/AgDR-0027-old.md',
+        relativePath: 'archive/decisions/AgDR-0027-old.md',
+        basename: 'AgDR-0027-old.md',
+        name: 'AgDR-0027-old'
+      },
+      {
+        filePath: '/repo/docs/decisions/AgDR-0027-current.md',
+        relativePath: 'docs/decisions/AgDR-0027-current.md',
+        basename: 'AgDR-0027-current.md',
+        name: 'AgDR-0027-current'
+      }
+    ]
+    const index = createMarkdownDocumentIndex(ofmDocs)
+
+    expect(resolveMarkdownDocLink('AgDR-0027', index)).toMatchObject({
+      status: 'resolved',
+      document: { relativePath: 'docs/decisions/AgDR-0027-current.md' }
+    })
+  })
 })
 
 describe('doc link hrefs', () => {
