@@ -231,6 +231,11 @@ export function MobileNativeChatOverlay({
                         ? () => void images.attachImage('library')
                         : undefined
                     }
+                    onTakePhoto={
+                      controller.nativeChatAcceptsImages
+                        ? () => void images.attachImage('camera')
+                        : undefined
+                    }
                     attachments={images.attachments}
                     onRemoveAttachment={images.removeAttachment}
                     isAttaching={images.isAttaching}

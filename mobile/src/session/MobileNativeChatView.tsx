@@ -106,6 +106,8 @@ type Props = ComposerTrayProps & {
   draftKey: string | null
   onComposerTextChange: (text: string) => void
   onAttachImage?: () => void
+  onTakePhoto?: () => void
+  /** Pending image attachments shown as composer thumbnails until the next send. */
   attachments?: PendingNativeChatImage[]
   onRemoveAttachment?: (id: string) => void
   isAttaching?: boolean
@@ -178,6 +180,7 @@ export function MobileNativeChatView({
   composerScopeKey,
   onComposerTextChange,
   onAttachImage,
+  onTakePhoto,
   attachments,
   onRemoveAttachment,
   isAttaching,
@@ -398,6 +401,7 @@ export function MobileNativeChatView({
         agent={agent}
         sessionOptions={sessionOptions}
         onAttachImage={onAttachImage}
+        onTakePhoto={onTakePhoto}
         attachments={attachments}
         onRemoveAttachment={onRemoveAttachment}
         isAttaching={isAttaching}

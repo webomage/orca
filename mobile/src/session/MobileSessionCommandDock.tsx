@@ -100,6 +100,7 @@ export function MobileSessionCommandDock({
               disabledButtonStyle={styles.sendButtonDisabled}
               onAttachImage={() => void attachImage('library')}
               onAttachFile={() => void attachImage('files')}
+              onTakePhoto={() => void attachImage('camera')}
               onDictationToggle={handleDictationToggle}
               onDictationPressIn={handleDictationPressIn}
               onDictationPressOut={handleDictationPressOut}
@@ -169,6 +170,7 @@ export function MobileSessionCommandDock({
               disabledButtonStyle={styles.sendButtonDisabled}
               onAttachImage={() => void attachImage('library')}
               onAttachFile={() => void attachImage('files')}
+              onTakePhoto={() => void attachImage('camera')}
               onDictationToggle={handleDictationToggle}
               onDictationPressIn={handleDictationPressIn}
               onDictationPressOut={handleDictationPressOut}

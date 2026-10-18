@@ -15,6 +15,8 @@ const ids = vi.hoisted(() => ({ next: 0 }))
 vi.mock('../../../../../src/shared/uuid-v4', () => ({ createUuidV4: () => `img-${++ids.next}` }))
 vi.mock('../../../platform/media-picker', () => ({ useMediaPicker: () => ({ pickImages: pick }) }))
 
+import { CameraPermissionError } from '../../../platform/media-picker-contract'
+
 function ok(id: string, result: unknown): RpcSuccess {
   return { id, ok: true, result, _meta: { runtimeId: 'r' } }
 }
@@ -875,4 +877,23 @@ describe('useMobileNativeChatImageAttachments', () => {
     })
     expect(showToast).toHaveBeenCalledWith('Attach failed (disconnected)', 1500)
   })
+
+  it('toasts Camera permission denied when camera access is rejected', async () => {
+    const client = makeClient([])
+    const showToast = vi.fn()
+    mount(
+      baseArgs({
+        client: client as unknown as RpcClient,
+        showToast
+      })
+    )
+    pick.mockImplementation(() => {
+      throw new CameraPermissionError()
+    })
+    await act(async () => {
+      await hook!.attachImage('camera')
+    })
+    expect(showToast).toHaveBeenCalledWith('Camera permission denied', 1500)
+  })
 })
+

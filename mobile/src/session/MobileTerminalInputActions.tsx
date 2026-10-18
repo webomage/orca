@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, type StyleProp, type ViewStyle } from 'react-native'
-import { ImagePlus, Mic } from 'lucide-react-native'
+import { Camera, ImagePlus, Mic } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { keepHeldPressThroughLongPress } from './held-press-long-press'
@@ -21,6 +21,7 @@ type MobileTerminalInputActionsProps = {
   readonly disabledButtonStyle: StyleProp<ViewStyle>
   readonly onAttachImage: () => void
   readonly onAttachFile: () => void
+  readonly onTakePhoto?: () => void
   readonly onDictationToggle: () => void
   readonly onDictationPressIn: () => void
   readonly onDictationPressOut: () => void
@@ -38,6 +39,7 @@ export function MobileTerminalInputActions({
   disabledButtonStyle,
   onAttachImage,
   onAttachFile,
+  onTakePhoto,
   onDictationToggle,
   onDictationPressIn,
   onDictationPressOut,
@@ -63,6 +65,16 @@ export function MobileTerminalInputActions({
           <ImagePlus size={17} color={colors.textSecondary} strokeWidth={2.4} />
         )}
       </Pressable>
+      {onTakePhoto ? (
+        <Pressable
+          style={[buttonStyle, (!canSend || isAttaching) && disabledButtonStyle]}
+          disabled={!canSend || isAttaching}
+          onPress={onTakePhoto}
+          accessibilityLabel={isAttaching ? 'Sending image' : 'Take a photo'}
+        >
+          <Camera size={17} color={colors.textSecondary} strokeWidth={2.4} />
+        </Pressable>
+      ) : null}
       {dictationEnabled ? (
         <Pressable
           style={[

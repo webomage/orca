@@ -49,6 +49,7 @@ vi.mock('react-native', async () => {
 
 vi.mock('lucide-react-native', () => ({
   ArrowUp: 'ArrowUp',
+  Camera: 'Camera',
   Check: 'Check',
   ChevronDown: 'ChevronDown',
   ChevronLeft: 'ChevronLeft',
@@ -858,4 +859,26 @@ describe('MobileNativeChatComposer', () => {
 
     expect(Keyboard.dismiss).not.toHaveBeenCalled()
   })
+
+  it('renders a Take photo button that invokes onTakePhoto when pressed', async () => {
+    const onTakePhoto = vi.fn()
+    await act(async () => {
+      renderer = create(
+        createElement(MobileNativeChatComposer, {
+          value: '',
+          onChangeText: vi.fn(),
+          onSend: vi.fn().mockResolvedValue(true),
+          sendSurfaceId: 'tab-a',
+          getSendCompletionGeneration: getCurrentSendCompletionGeneration,
+          onTakePhoto
+        })
+      )
+    })
+    const takePhotoButton = renderer!.root.find(
+      (node) => node.type === 'Pressable' && node.props.accessibilityLabel === 'Take photo'
+    ) as { props: { onPress: () => void } }
+    takePhotoButton.props.onPress()
+    expect(onTakePhoto).toHaveBeenCalledTimes(1)
+  })
 })
+
