@@ -10,6 +10,8 @@ import { useTerminalLiveInputFocus } from '../terminal/use-terminal-live-input-f
 import { reopensFocusedInputWhenKeyboardHidden } from '../terminal/terminal-live-input-keyboard-reopen'
 import type { TerminalLiveInputSender } from '../terminal/terminal-live-input-sender'
 import { useTerminalLiveInputCommit } from '../terminal/use-terminal-live-input-commit'
+import { useTerminalPasswordPromptState } from '../terminal/use-terminal-password-prompt-state'
+import { registerTerminalPasswordPromptObserver } from './mobile-session-route-helpers'
 import { resolveMobileTerminalInputGate } from '../terminal/terminal-input-connection-gate'
 import { createInitialSessionAutoCreateState } from './use-initial-session-terminal-autocreate'
 import { TerminalViewportResubscribeBudget } from './mobile-terminal-viewport-resubscribe'
@@ -127,6 +129,15 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
     []
   )
   const {
+    terminalPasswordPromptHandles,
+    observeTerminalOutputForPasswordPrompt,
+    clearTerminalPasswordPrompt
+  } = useTerminalPasswordPromptState()
+  registerTerminalPasswordPromptObserver(
+    terminalCwdRef.current,
+    observeTerminalOutputForPasswordPrompt
+  )
+  const {
     clearPendingLiveInputCommit,
     flushPendingLiveInputBeforeExternalSend,
     getLiveInputInteractionGeneration,
@@ -238,7 +249,10 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
     reconcileBufferedDraftsRef,
     input: bufferedTerminalDraftState.input,
     setInput: bufferedTerminalDraftState.setInput,
-    getLiveInteractionGeneration: getLiveInputInteractionGeneration
+    getLiveInteractionGeneration: getLiveInputInteractionGeneration,
+    terminalPasswordPromptHandles,
+    observeTerminalOutputForPasswordPrompt,
+    clearTerminalPasswordPrompt
   }
 }
 

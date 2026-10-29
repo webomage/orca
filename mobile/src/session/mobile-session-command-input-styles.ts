@@ -199,7 +199,8 @@ export const mobileSessionCommandInputStyles = themedStyleSheet(() => ({
     marginRight: spacing.sm
   },
   commandFieldInput: {
-    marginRight: 0
+    marginRight: 0,
+    paddingRight: 32
   },
   // Dictation's preview draws the draft instead while it is hidden.
   commandFieldInputHidden: {
@@ -211,7 +212,8 @@ export const mobileSessionCommandInputStyles = themedStyleSheet(() => ({
   },
   liveInputCapture: {
     minWidth: 0,
-    marginRight: 0
+    marginRight: 0,
+    paddingRight: 32
   },
   liveInputCaptureDisabled: {
     opacity: 0.45

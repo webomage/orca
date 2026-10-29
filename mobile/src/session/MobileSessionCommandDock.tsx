@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { View, TextInput, Pressable } from 'react-native'
 import { hostOs } from '../platform/host-os'
 import { ArrowUp } from 'lucide-react-native'
@@ -5,7 +6,9 @@ import {
   getTerminalCommandKeyboardType,
   getTerminalLiveInputKeyboardType
 } from '../terminal/terminal-keyboard-type'
+import { resolveTerminalInputMaskedState } from '../terminal/terminal-password-prompt'
 import { MobileTerminalLiveInputStatus } from './MobileTerminalLiveInputStatus'
+import { MobileTerminalPasswordMaskOverlay } from './MobileTerminalPasswordMaskOverlay'
 import { MobileTerminalCommandDictationPreview } from './MobileTerminalCommandDictationPreview'
 import { readMobileDictationAnchor } from '../dictation/mobile-dictation-text-insertion'
 import { MobileTerminalInputActions } from './MobileTerminalInputActions'
@@ -64,6 +67,20 @@ export function MobileSessionCommandDock({
     attachImage,
     keyboardLift
   } = controller
+  const [manualMaskByHandle, setManualMaskByHandle] = useState<ReadonlyMap<string, boolean>>(
+    () => new Map()
+  )
+  const maskScopeKey = activeHandle ?? '__default__'
+  const autoDetectedPrompt = Boolean(
+    activeHandle && controller.terminalPasswordPromptHandles?.has(activeHandle)
+  )
+  const inputMasked = resolveTerminalInputMaskedState({
+    autoDetectedPrompt,
+    manualOverride: manualMaskByHandle.get(maskScopeKey)
+  })
+  const toggleInputMask = () => {
+    setManualMaskByHandle((prev) => new Map(prev).set(maskScopeKey, !inputMasked))
+  }
   return (
     sessionCommandDockShown(controller) && (
       <View
@@ -83,6 +100,7 @@ export function MobileSessionCommandDock({
                 style={[
                   styles.textInput,
                   styles.liveInputCapture,
+                  inputMasked && liveInputCapture.length > 0 && styles.commandFieldInputHidden,
                   !canSend && styles.liveInputCaptureDisabled
                 ]}
                 value={liveInputCapture}
@@ -109,6 +127,11 @@ export function MobileSessionCommandDock({
                 blurOnSubmit={false}
                 editable={canSend}
                 importantForAutofill="no"
+              />
+              <MobileTerminalPasswordMaskOverlay
+                value={liveInputCapture}
+                masked={inputMasked}
+                onToggleMask={toggleInputMask}
               />
               <MobileTerminalLiveInputStatus
                 dictation={dictation}
@@ -150,7 +173,9 @@ export function MobileSessionCommandDock({
                 style={[
                   styles.textInput,
                   styles.commandFieldInput,
-                  commandDictationPreview && styles.commandFieldInputHidden
+                  (commandDictationPreview ||
+                    (inputMasked && bufferedTerminalDraftState.input.length > 0)) &&
+                    styles.commandFieldInputHidden
                 ]}
                 value={bufferedTerminalDraftState.input}
                 // Why: iOS kills active dictation/IME if JS writes a value differing from native text; store raw, normalize at send.
@@ -186,7 +211,13 @@ export function MobileSessionCommandDock({
                   draft={bufferedTerminalDraftState.input}
                   preview={commandDictationPreview}
                 />
-              ) : null}
+              ) : (
+                <MobileTerminalPasswordMaskOverlay
+                  value={bufferedTerminalDraftState.input}
+                  masked={inputMasked}
+                  onToggleMask={toggleInputMask}
+                />
+              )}
             </View>
             <MobileTerminalInputActions
               canSend={canSend}
