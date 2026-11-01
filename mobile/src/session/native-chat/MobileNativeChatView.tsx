@@ -107,6 +107,7 @@ type ChatViewProps = MobileNativeChatSendProps &
     draftKey: string | null
     onComposerTextChange: (text: string) => void
     onAttachImage?: () => void
+    onTakePhoto?: () => void
     onPasteImages?: (paste: MobilePastedImages) => void
     attachments?: PendingNativeChatImage[]
     onRemoveAttachment?: (id: string) => void
@@ -166,6 +167,7 @@ export function MobileNativeChatView({
   composerScopeKey,
   onComposerTextChange,
   onAttachImage,
+  onTakePhoto,
   onPasteImages,
   attachments,
   onRemoveAttachment,
@@ -401,18 +403,10 @@ export function MobileNativeChatView({
             agent={agent}
             sessionOptions={sessionOptions}
             contextUsage={contextUsage}
-            onAttachImage={onAttachImage}
-            onPasteImages={onPasteImages}
-            attachments={attachments}
-            onRemoveAttachment={onRemoveAttachment}
-            isAttaching={isAttaching}
-            onMicPress={onMicPress}
-            micActive={micActive}
-            micStarting={micStarting}
-            micProcessing={micProcessing}
-            dictationMode={dictationMode}
-            onMicPressIn={onMicPressIn}
-            onMicPressOut={onMicPressOut}
+            {...{ onAttachImage, onTakePhoto, onPasteImages, attachments }}
+            {...{ onRemoveAttachment, isAttaching }}
+            {...{ onMicPress, micActive, micStarting, micProcessing, dictationMode }}
+            {...{ onMicPressIn, onMicPressOut }}
             disabled={lockReason !== null}
             sendDisabled={expandedPromptOwnsSend}
             placeholder={composerPlaceholder}

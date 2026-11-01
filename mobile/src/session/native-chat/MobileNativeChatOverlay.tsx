@@ -303,6 +303,11 @@ export function MobileNativeChatOverlay({
                           ? () => void images.attachImage('library')
                           : undefined
                       }
+                      onTakePhoto={
+                        controller.nativeChatAcceptsImages
+                          ? () => void images.attachImage('camera')
+                          : undefined
+                      }
                       onPasteImages={
                         controller.nativeChatAcceptsImages
                           ? (paste) => void images.attachImage(paste)
