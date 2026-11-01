@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CLIPBOARD_IMAGE_MAX_SOURCE_BYTES } from '../../../src/shared/clipboard-image'
 
 vi.mock('expo-image-picker', () => ({
+  UIImagePickerPreferredAssetRepresentationMode: { Compatible: 'compatible' },
   requestCameraPermissionsAsync: vi.fn(),
   launchCameraAsync: vi.fn(),
   requestMediaLibraryPermissionsAsync: vi.fn(),
@@ -122,7 +123,9 @@ describe('pickMobileImage', () => {
       base64: Buffer.from(bytes).toString('base64'),
       uri: 'file:///x.jpg'
     })
-    expect(launchLibrary).toHaveBeenCalledWith(expect.objectContaining({ base64: false }))
+    expect(launchLibrary).toHaveBeenCalledWith(
+      expect.objectContaining({ base64: false, preferredAssetRepresentationMode: 'compatible' })
+    )
     expect(fetchSpy).not.toHaveBeenCalled()
     expect(file.close).toHaveBeenCalledTimes(1)
   })

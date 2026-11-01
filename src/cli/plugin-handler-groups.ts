@@ -9,7 +9,9 @@ export const PLUGIN_HANDLER_GROUPS: readonly HandlerGroup[] = [
       'plugin types',
       'plugin validate',
       'plugin inspect',
-      'plugin release-entry'
+      'plugin release-entry',
+      'plugin test',
+      'plugin check'
     ],
     load: async () => (await import('./handlers/plugin-authoring.js')).PLUGIN_AUTHORING_HANDLERS
   },
@@ -29,5 +31,10 @@ export const PLUGIN_HANDLER_GROUPS: readonly HandlerGroup[] = [
       'plugin dev unload'
     ],
     load: async () => (await import('./handlers/plugin-runtime.js')).PLUGIN_RUNTIME_HANDLERS
+  },
+  {
+    name: 'plugin-dev-watch',
+    keys: ['plugin dev watch'],
+    load: async () => (await import('./handlers/plugin-dev-watch.js')).PLUGIN_DEV_WATCH_HANDLERS
   }
 ]

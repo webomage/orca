@@ -44,6 +44,36 @@ export const PLUGIN_AUTHORING_COMMAND_SPECS: CommandSpec[] = [
     examples: ['orca plugin types .']
   },
   {
+    path: ['plugin', 'test'],
+    summary: "Run a plugin's own tests on this machine, unsandboxed: only for code you trust",
+    usage: 'orca plugin test [dir] [--json]',
+    allowedFlags: [...LOCAL_COMMAND_FLAGS, 'dir'],
+    positionalArgs: ['dir'],
+    notes: [
+      "Not sandboxed: this runs the plugin's code and tests on this machine with your user's full access, outside Orca's plugin sandbox. Run it only on code you trust.",
+      'Runs every *.test.ts(x) (also .mts, .js, .jsx, .mjs) under the folder, skipping node_modules, .orca, dist and dot-folders. The folder defaults to the current one.',
+      "Uses Node's built-in test runner (node:test), or the plugin's own vitest when it has one in node_modules. No config: `orca` and `orca/testing` resolve to the files this Orca ships, and sources are transpiled and imported exactly as Orca loads them.",
+      'Runs on the `node` on PATH when it is 20.6 or newer, else on the Node built into Orca, so no Node install is needed. It does not reach the Orca app.',
+      "Exit code: the runner's (0 when every test passes). With --json the runner output goes to stderr and one result object to stdout."
+    ],
+    examples: ['orca plugin test .', 'orca plugin test ./todo-panel --json']
+  },
+  {
+    path: ['plugin', 'check'],
+    summary:
+      'Validate a plugin and render each components panel once on this machine, unsandboxed: only for code you trust',
+    usage: 'orca plugin check [dir] [--json]',
+    allowedFlags: [...LOCAL_COMMAND_FLAGS, 'dir'],
+    positionalArgs: ['dir'],
+    notes: [
+      "Not sandboxed: this runs the plugin's code on this machine with your user's full access, outside Orca's plugin sandbox. Check only code you trust.",
+      'Validates like `orca plugin validate`, then mounts each `ui: "components"` panel in Node against a stand-in host with the capabilities the manifest declares, and reports runtime errors (with file:line), layouts Orca would refuse, and props it would drop.',
+      'Runs on the `node` on PATH when it is 20.6 or newer, else on the Node built into Orca. It does not reach the Orca app.',
+      'Exit codes: 0 ok, 1 a panel failed to render, 2 the plugin is invalid (plugin_invalid).'
+    ],
+    examples: ['orca plugin check .', 'orca plugin check ./todo-panel --json']
+  },
+  {
     path: ['plugin', 'validate'],
     summary: 'Check a plugin folder, manifest or catalog the way Orca will load it',
     usage: 'orca plugin validate <dir|orca-plugin.json|orca-catalog.json> [--json]',
@@ -163,6 +193,28 @@ export const PLUGIN_RUNTIME_COMMAND_SPECS: CommandSpec[] = [
       EXIT_CODES_NOTE
     ],
     examples: ['orca plugin restart acme.notes']
+  },
+  {
+    path: ['plugin', 'dev', 'watch'],
+    summary: 'Load a plugin folder, then stream its logs and reloads until Ctrl-C',
+    usage: 'orca plugin dev watch <dir> [--check] [--approve <fingerprint>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'dir', 'approve', 'check'],
+    positionalArgs: ['dir'],
+    notes: [
+      'The inner loop: loads the folder like `orca plugin dev load` (refreshing its .orca/types), then prints each log line its panels, editors and worker write, every reload a save causes, and status changes such as errored or invalid with the error.',
+      'When an edit asks for new access it prints the `orca plugin dev reload <dir> --approve <fingerprint>` command to run from another shell; this one keeps watching.',
+      'Ctrl-C unloads the folder (unless it was loaded before this command) and exits 0; a second Ctrl-C exits at once. If the connection to Orca drops it says so and exits 1.',
+      "--check runs `orca plugin check` after the load and after each reload and prints the result inline (one `check` event with --json). Like `orca plugin check` it runs the plugin's code on this machine, unsandboxed, so use it on code you trust; it needs a local folder.",
+      '--json prints one JSON object per line: `loaded`, `log`, `reloaded`, `status`, `approval`, `check`, `warning`, `disconnected`, `unloaded` (field `type`). A failed first load prints the usual error instead.',
+      APPROVE_NOTE,
+      'With --environment the folder is a path on that Orca server; pass it absolute.',
+      EXIT_CODES_NOTE
+    ],
+    examples: [
+      'orca plugin dev watch .',
+      'orca plugin dev watch ./todo-panel --check',
+      'orca plugin dev watch ./notes-editor --json'
+    ]
   },
   {
     path: ['plugin', 'dev', 'load'],
