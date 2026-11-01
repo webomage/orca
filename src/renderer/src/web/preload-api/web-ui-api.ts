@@ -11,30 +11,13 @@ import { normalizeFeatureInteractions } from '../../../../shared/feature-interac
 import type { FeatureInteractionId } from '../../../../shared/feature-interactions'
 import { omitPairingLocalUiFields } from '../../../../shared/pairing-local-ui-fields'
 import type { PairedUiState } from '../../../../shared/pairing-local-ui-fields'
-import { parseWorktreeDeepLink } from '../../../../shared/worktree-deep-link'
-import {
-  clipboardHasImage,
-  readClipboardImagePngBase64,
-  readClipboardImageThumbnail,
-  saveClipboardImageAsTempFileInRuntime,
-  writeWebClipboardImage,
-  writeWebClipboardText
-} from './web-clipboard-api'
-import {
-  mergeContextualTourSeenIds,
-  mergeFeatureInteractionState,
-  mergeHostWebUIState,
-  mergeOsc52ClipboardNoticePending,
-  mergeWebUIState
-} from './web-preference-normalization'
+import { orchestrationDeepLinkChannel, worktreeDeepLinkChannel } from './web-deep-link-channel'
+import * as webClipboard from './web-clipboard-api'
+import * as webPrefNorm from './web-preference-normalization'
 import { readLocalWebUIState } from './web-preferences-store'
 import { callRuntimeResult } from './web-runtime-calls'
 import { requireActiveEnvironmentOrNull } from './web-runtime-session'
 import { UI_STORAGE_KEY, noopUnsubscribe, writeJson } from './web-storage'
-
-let initialBrowserWorktreeDeepLink =
-  typeof window !== 'undefined' ? parseWorktreeDeepLink(window.location.href) : null
-let initialBrowserWorktreeDeepLinkConsumed = false
 
 /** Combines browser-local preferences with host persistence; acknowledged writes remain distinct from best-effort writes. */
 export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
@@ -63,13 +46,16 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
         }
         const local = readLocalWebUIState()
         const next = {
-          ...mergeHostWebUIState(local, result.ui),
-          osc52ClipboardDefaultOnNoticePending: mergeOsc52ClipboardNoticePending(local, result.ui),
-          featureInteractions: mergeFeatureInteractionState(
+          ...webPrefNorm.mergeHostWebUIState(local, result.ui),
+          osc52ClipboardDefaultOnNoticePending: webPrefNorm.mergeOsc52ClipboardNoticePending(
+            local,
+            result.ui
+          ),
+          featureInteractions: webPrefNorm.mergeFeatureInteractionState(
             local.featureInteractions,
             result.ui.featureInteractions
           ),
-          contextualToursSeenIds: mergeContextualTourSeenIds(
+          contextualToursSeenIds: webPrefNorm.mergeContextualTourSeenIds(
             local.contextualToursSeenIds,
             result.ui.contextualToursSeenIds
           )
@@ -83,7 +69,7 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
     },
     /** Persists locally first and attempts the host write without propagating offline failures to fire-and-forget callers. */
     set: async (updates) => {
-      const next = mergeWebUIState(readLocalWebUIState(), updates)
+      const next = webPrefNorm.mergeWebUIState(readLocalWebUIState(), updates)
       writeJson(UI_STORAGE_KEY, next)
       zoomLevel = next.uiZoomLevel
       // Older hosts lack stripping; sending browser runtime:web-* keys would overwrite desktop order.
@@ -97,7 +83,7 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
     },
     /** Rejects failed or stripped host updates so the diff writer cannot acknowledge preferences the host never received. */
     setWithAck: async (updates) => {
-      const next = mergeWebUIState(readLocalWebUIState(), updates)
+      const next = webPrefNorm.mergeWebUIState(readLocalWebUIState(), updates)
       writeJson(UI_STORAGE_KEY, next)
       zoomLevel = next.uiZoomLevel
       const { environmentId, hostUpdates } = prepareHostUpdates(updates)
@@ -114,7 +100,7 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
       const current = readLocalWebUIState()
       const featureInteractions = normalizeFeatureInteractions(current.featureInteractions)
       const existing = featureInteractions[id]
-      const optimistic = mergeWebUIState(current, {
+      const optimistic = webPrefNorm.mergeWebUIState(current, {
         featureInteractions: {
           ...featureInteractions,
           [id]: {
@@ -132,13 +118,16 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
         )
         const local = readLocalWebUIState()
         const next = {
-          ...mergeHostWebUIState(local, result.ui),
-          osc52ClipboardDefaultOnNoticePending: mergeOsc52ClipboardNoticePending(local, result.ui),
-          featureInteractions: mergeFeatureInteractionState(
+          ...webPrefNorm.mergeHostWebUIState(local, result.ui),
+          osc52ClipboardDefaultOnNoticePending: webPrefNorm.mergeOsc52ClipboardNoticePending(
+            local,
+            result.ui
+          ),
+          featureInteractions: webPrefNorm.mergeFeatureInteractionState(
             local.featureInteractions,
             result.ui.featureInteractions
           ),
-          contextualToursSeenIds: mergeContextualTourSeenIds(
+          contextualToursSeenIds: webPrefNorm.mergeContextualTourSeenIds(
             local.contextualToursSeenIds,
             result.ui.contextualToursSeenIds
           )
@@ -165,7 +154,7 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
       if (!requireActiveEnvironmentOrNull()) {
         return null
       }
-      const contentBase64 = await readClipboardImagePngBase64()
+      const contentBase64 = await webClipboard.readClipboardImagePngBase64()
       if (!contentBase64) {
         return null
       }
@@ -178,7 +167,7 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
           environmentId: args.runtimeEnvironmentId
         })
       }
-      return saveClipboardImageAsTempFileInRuntime(contentBase64, args)
+      return webClipboard.saveClipboardImageAsTempFileInRuntime(contentBase64, args)
     },
     savePastedTextAsFile: savePastedTextAsWebAgentSessionAttachment,
     clipboardHasImage,
@@ -187,7 +176,7 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
     // Why empty: a browser has no local paste folder, so restored pastes stay to attach again.
     restoreNativeChatPastes: async () => [],
     onAgentSessionUploadRemoved: () => noopUnsubscribe,
-    readClipboardImageThumbnail: () => readClipboardImageThumbnail().catch(() => null),
+    readClipboardImageThumbnail: () => webClipboard.readClipboardImageThumbnail().catch(() => null),
     writeClipboardText: writeWebClipboardText,
     writeTerminalClipboardText: writeWebClipboardText,
     writeSelectionClipboardText: () =>
@@ -218,30 +207,10 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
     consumePendingSkillShare: () => Promise.resolve(null),
     onOpenPluginInstallLink: () => noopUnsubscribe,
     consumePendingPluginInstallLink: () => Promise.resolve(null),
-    onOpenWorktreeDeepLink: (callback) => {
-      if (typeof window === 'undefined') {
-        return noopUnsubscribe
-      }
-      const handlePopState = () => {
-        const link = parseWorktreeDeepLink(window.location.href)
-        if (link) {
-          callback(link)
-        }
-      }
-      window.addEventListener('popstate', handlePopState)
-      return () => window.removeEventListener('popstate', handlePopState)
-    },
-    consumePendingWorktreeDeepLink: () => {
-      if (initialBrowserWorktreeDeepLinkConsumed) {
-        return Promise.resolve(null)
-      }
-      initialBrowserWorktreeDeepLinkConsumed = true
-      const pending =
-        initialBrowserWorktreeDeepLink ??
-        (typeof window !== 'undefined' ? parseWorktreeDeepLink(window.location.href) : null)
-      initialBrowserWorktreeDeepLink = null
-      return Promise.resolve(pending)
-    },
+    onOpenWorktreeDeepLink: worktreeDeepLinkChannel.onOpen,
+    consumePendingWorktreeDeepLink: worktreeDeepLinkChannel.consume,
+    onOpenOrchestrationDeepLink: orchestrationDeepLinkChannel.onOpen,
+    consumePendingOrchestrationDeepLink: orchestrationDeepLinkChannel.consume,
     // Why: the web client has no OS shell handing it files, so there is never a queued open.
     onOpenMarkdownFiles: () => noopUnsubscribe,
     consumePendingMarkdownFileOpens: () => Promise.resolve([]),

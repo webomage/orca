@@ -776,9 +776,7 @@ describe('createUISlice space navigation', () => {
   it('resolves worktree-create deep link repo by displayName or path basename', () => {
     const store = createUIStore()
     store.setState({
-      repos: [
-        { id: 'repo-uuid-1', displayName: 'Orca App', path: '/Users/dev/orca' }
-      ]
+      repos: [{ id: 'repo-uuid-1', displayName: 'Orca App', path: '/Users/dev/orca' }]
     } as unknown as Partial<ReturnType<typeof store.getState>>)
 
     store.getState().openWorktreeDeepLink({
@@ -794,5 +792,24 @@ describe('createUISlice space navigation', () => {
       initialBaseBranch: 'main',
       telemetrySource: 'unknown'
     })
+  })
+  it('opens activity view and stores intent when handling orchestration-new deep link', () => {
+    const store = createUIStore()
+
+    store.getState().openOrchestrationDeepLink({
+      type: 'orchestration-new',
+      title: 'Fix issue',
+      repo: 'my-project'
+    })
+
+    expect(store.getState().activeView).toBe('activity')
+    expect(store.getState().pendingOrchestrationDeepLink).toEqual({
+      type: 'orchestration-new',
+      title: 'Fix issue',
+      repo: 'my-project'
+    })
+
+    store.getState().clearPendingOrchestrationDeepLink()
+    expect(store.getState().pendingOrchestrationDeepLink).toBeNull()
   })
 })

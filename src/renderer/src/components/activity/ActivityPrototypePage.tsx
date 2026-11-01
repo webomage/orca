@@ -44,6 +44,7 @@ export default function ActivityPrototypePage(): React.JSX.Element {
   const setCompactMode = useAppStore((s) => s.setAgentsCompactMode)
   const showChildAgents = useAppStore((s) => s.agentsShowChildAgents)
   const setShowChildAgents = useAppStore((s) => s.setAgentsShowChildAgents)
+  useOrchestrationDeepLinkEffect()
   const [selectedPaneKey, setSelectedPaneKey] = useState<string | null>(null)
   const [displayedPaneKey, setDisplayedPaneKey] = useState<string | null>(null)
   const [activePortalSlotId, setActivePortalSlotId] =

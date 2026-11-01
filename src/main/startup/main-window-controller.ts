@@ -184,6 +184,7 @@ export function openMainWindow(options: { revealOnDidFinishLoad?: boolean } = {}
     // Clear readiness before reload/navigation tears down the old renderer listener.
     state.osDocumentOpenListenerReady = false
     state.worktreeDeepLinkListenerReady = false
+    state.orchestrationDeepLinkListenerReady = false
   }
   window.webContents.on('did-start-loading', resetDocumentListenersOnNavigation)
   window.webContents.on('render-process-gone', resetDocumentListenersOnNavigation)
@@ -238,6 +239,7 @@ export function openMainWindow(options: { revealOnDidFinishLoad?: boolean } = {}
     if (state.mainWindow === window) {
       state.mainWindow = null
       state.worktreeDeepLinkListenerReady = false
+      state.orchestrationDeepLinkListenerReady = false
       if (state.isServeMode) {
         applyBackgroundActivationPolicy({ serveWithoutDesktopWindow: true, warn: console.warn })
       }
