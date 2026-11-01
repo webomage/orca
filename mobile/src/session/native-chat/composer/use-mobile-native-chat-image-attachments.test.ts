@@ -8,6 +8,7 @@ import type { RpcResponse, RpcSuccess } from '../../../transport/rpc/rpc-wire-ty
 import { resetMobileNativeChatStaleInputForTests } from '../mobile-native-chat-stale-input'
 import { resetMobileNativeChatTerminalWritesForTests } from '../mobile-native-chat-terminal-write-lock'
 import { useMobileNativeChatImageAttachments } from './use-mobile-native-chat-image-attachments'
+import { CameraPermissionError } from '../../../platform/media-picker-contract'
 
 // Stub the media seam so direct Expo imports would expose unsupported Flow syntax and fail the transform.
 const pick = vi.hoisted(() => vi.fn())
@@ -140,5 +141,12 @@ describe('useMobileNativeChatImageAttachments', () => {
     })
     expect(hook!.isAttaching).toBe(false)
     expect(hook!.attachments).toHaveLength(1)
+  })
+  it('toasts Camera permission denied when camera access is rejected', async () => {
+    const showToast = vi.fn()
+    mount(baseArgs({ client: makeClient([]) as unknown as RpcClient, showToast }))
+    pick.mockRejectedValue(new CameraPermissionError())
+    await act(() => hook!.attachImage('camera'))
+    expect(showToast).toHaveBeenCalledWith('Camera permission denied', 1500)
   })
 })
