@@ -108,6 +108,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
     canSend,
     isAttaching,
     onAttachImage: () => void attachImage('library'),
+    onTakePhoto: () => void attachImage('camera'),
     onAttachFile: () => void attachImage('files')
   }
   const dictationProps = {

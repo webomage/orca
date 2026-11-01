@@ -110,6 +110,7 @@ type ChatViewProps = MobileNativeChatSendProps & {
   draftKey: string | null
   onComposerTextChange: (text: string) => void
   onAttachImage?: () => void
+  onTakePhoto?: () => void
   attachments?: PendingNativeChatImage[]
   onRemoveAttachment?: (id: string) => void
   isAttaching?: boolean
@@ -178,6 +179,7 @@ export function MobileNativeChatView({
   composerScopeKey,
   onComposerTextChange,
   onAttachImage,
+  onTakePhoto,
   attachments,
   onRemoveAttachment,
   isAttaching,
@@ -401,20 +403,26 @@ export function MobileNativeChatView({
           onChangeText={onComposerTextChange}
           onSend={handleSend}
           sendSurfaceId={sendSurfaceId}
-          {...{ getSendCompletionGeneration, getComposerEditGeneration, inputRef, sendFollowUp }}
-          agent={agent}
-          sessionOptions={sessionOptions}
-          onAttachImage={onAttachImage}
-          attachments={attachments}
-          onRemoveAttachment={onRemoveAttachment}
-          isAttaching={isAttaching}
-          onMicPress={onMicPress}
-          micActive={micActive}
-          micStarting={micStarting}
-          micProcessing={micProcessing}
-          dictationMode={dictationMode}
-          onMicPressIn={onMicPressIn}
-          onMicPressOut={onMicPressOut}
+          {...{
+            getSendCompletionGeneration,
+            getComposerEditGeneration,
+            inputRef,
+            sendFollowUp,
+            agent,
+            sessionOptions,
+            onAttachImage,
+            onTakePhoto,
+            attachments,
+            onRemoveAttachment,
+            isAttaching,
+            onMicPress,
+            micActive,
+            micStarting,
+            micProcessing,
+            dictationMode,
+            onMicPressIn,
+            onMicPressOut
+          }}
           disabled={lockReason !== null}
           sendDisabled={expandedPromptOwnsSend}
           placeholder={composerPlaceholder}
