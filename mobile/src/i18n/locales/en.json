@@ -2785,6 +2785,10 @@
     },
     "usePrTextAction": {
       "updateFailed": "Failed to update pull request."
+    },
+    "terminalPasswordMask": {
+      "showInput": "Show input",
+      "hideInput": "Hide input"
     }
   },
   "chat": {
