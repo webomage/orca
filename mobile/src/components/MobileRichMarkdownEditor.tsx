@@ -16,8 +16,14 @@ import { colors } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { openExternalLink } from '../platform/external-link'
+import { readSvgIntrinsicSize, svgMarkupDataUri } from '../../../src/shared/svg-document'
+import { MobileNativeChatImageViewer } from '../session/native-chat/visual/MobileNativeChatImageViewer'
 import { MobileRichMarkdownToolbar } from './MobileRichMarkdownToolbar'
 import { TextInputModal } from './TextInputModal'
+import {
+  mountRichMarkdownMermaidPreview,
+  type RichMarkdownMermaidPreviewHandle
+} from './mobile-rich-markdown-mermaid'
 import {
   ensureDocumentStyle,
   mountRichMarkdownWebDocument,
@@ -53,8 +59,12 @@ function MobileRichMarkdownEditorWebInner(
 ) {
   const t = useMobileTranslation()
   const colorScheme = useMobileColorScheme()
+  const colorSchemeRef = useRef(colorScheme)
+  colorSchemeRef.current = colorScheme
   const hostRef = useRef<View>(null)
   const documentRef = useRef<RichMarkdownWebDocument | null>(null)
+  const mermaidRef = useRef<RichMarkdownMermaidPreviewHandle | null>(null)
+  const [expandedMermaidSvg, setExpandedMermaidSvg] = useState<string | null>(null)
   // Document reports ready synchronously during mount before documentRef exists; queue controller content/editable calls until handle arrives or editor stays empty.
   const beforeMountRef = useRef<((send: RichMarkdownEditorApi) => void)[]>([])
   const receiveRef = useRef<((message: MobileRichMarkdownEditorMessage) => void) | null>(null)
@@ -164,12 +174,22 @@ function MobileRichMarkdownEditorWebInner(
       postToHost: (message) => receiveRef.current?.(message),
       promptForUrl
     })
+    const mermaidPreview = mountRichMarkdownMermaidPreview(host, {
+      getColorScheme: () => colorSchemeRef.current,
+      expandCopy: t('components.mermaidDiagram.expand', 'Expand diagram'),
+      codeToggleCopy: t('components.richMarkdownToolbar.codeBlock', 'Code block'),
+      onExpand: (svg) => setExpandedMermaidSvg(svg)
+    })
     documentRef.current = live
+    mermaidRef.current = mermaidPreview
     for (const call of beforeMountRef.current) {
       call(live.send)
     }
     beforeMountRef.current = []
+    mermaidPreview.sync()
     return () => {
+      mermaidRef.current = null
+      mermaidPreview.dispose()
       documentRef.current = null
       // Settle modal before disposing document so command resumes into stopped/refusing document rather than retaining mount scope.
       pendingUrlRef.current?.(null)
@@ -184,6 +204,7 @@ function MobileRichMarkdownEditorWebInner(
     const host = hostRef.current
     if (documentRef.current && host instanceof HTMLElement) {
       ensureDocumentStyle(host)
+      mermaidRef.current?.sync()
     }
   }, [colorScheme])
 
@@ -191,6 +212,12 @@ function MobileRichMarkdownEditorWebInner(
     <View style={styles.container}>
       <MobileRichMarkdownToolbar editable={editable} onCommand={runCommand} />
       <View ref={hostRef} style={styles.host} />
+      {expandedMermaidSvg ? (
+        <ExpandedMermaidDiagram
+          svg={expandedMermaidSvg}
+          onClose={() => setExpandedMermaidSvg(null)}
+        />
+      ) : null}
       <TextInputModal
         visible={urlPromptKind !== null}
         title={
@@ -212,6 +239,21 @@ function MobileRichMarkdownEditorWebInner(
 }
 
 export const MobileRichMarkdownEditor = memo(forwardRef(MobileRichMarkdownEditorWebInner))
+
+function ExpandedMermaidDiagram({ svg, onClose }: { svg: string; onClose: () => void }) {
+  const t = useMobileTranslation()
+  const uri = useMemo(() => svgMarkupDataUri(svg), [svg])
+  const size = useMemo(() => readSvgIntrinsicSize(svg), [svg])
+  return (
+    <MobileNativeChatImageViewer
+      uri={uri}
+      size={size}
+      upscale
+      label={t('components.mermaidDiagram.label', 'Mermaid diagram')}
+      onClose={onClose}
+    />
+  )
+}
 
 const styles = themedStyleSheet(() => ({
   container: { flex: 1, minHeight: 0, backgroundColor: colors.bgBase },

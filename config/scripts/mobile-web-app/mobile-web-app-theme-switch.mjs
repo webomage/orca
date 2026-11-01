@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest'
+import { mermaidRenderTest } from './mobile-web-app-mermaid-render.mjs'
 
 const readStyling = (page) =>
   page.evaluate(() => {
@@ -39,4 +40,6 @@ export function themeSwitchTest(getBrowser, openPage) {
       await page.close()
     }
   }, 180_000)
+
+  mermaidRenderTest(getBrowser, openPage)
 }

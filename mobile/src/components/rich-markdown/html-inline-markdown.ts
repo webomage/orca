@@ -5,6 +5,9 @@ function renderedText(node: Node): string {
     return ''
   }
   if (node instanceof Element) {
+    if (node.hasAttribute('data-orca-mermaid-preview')) {
+      return ''
+    }
     if (node.tagName.toLowerCase() === 'br') {
       return '\n'
     }

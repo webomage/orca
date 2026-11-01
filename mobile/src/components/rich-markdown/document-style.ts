@@ -177,6 +177,61 @@ export function richMarkdownEditorStyle(): string {
       font-size: 0.92em;
       white-space: pre-wrap;
     }
+    pre[data-language="mermaid"][data-mermaid-rendered="true"]:not([data-mermaid-show-code="true"])::before {
+      display: none;
+    }
+    pre[data-language="mermaid"][data-mermaid-rendered="true"]:not([data-mermaid-show-code="true"]) > code {
+      display: none;
+    }
+    .orca-mermaid-preview {
+      margin-top: 8px;
+      font-family: var(--font-sans);
+      white-space: normal;
+      user-select: none;
+    }
+    pre[data-language="mermaid"][data-mermaid-rendered="true"]:not([data-mermaid-show-code="true"]) > .orca-mermaid-preview {
+      margin-top: 0;
+    }
+    .orca-mermaid-preview-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .orca-mermaid-preview-title {
+      color: var(--muted-foreground);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .orca-mermaid-preview-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .orca-mermaid-btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--muted);
+      color: var(--muted-foreground);
+      padding: 2px 7px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.4;
+      cursor: pointer;
+    }
+    .orca-mermaid-svg {
+      overflow-x: auto;
+      cursor: pointer;
+    }
+    .orca-mermaid-svg svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
     hr {
       margin: 1.5em 0;
       border: none;

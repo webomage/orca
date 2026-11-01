@@ -198,4 +198,19 @@ describe('the editor document, from markdown and back', () => {
     expect(html).toContain('<td>1 | 2</td><td>3</td>')
     expect(currentMarkdown(scope)).toBe(markdown)
   })
+
+  it('ignores a rendered Mermaid preview inside a mermaid code block when serializing back to Markdown', () => {
+    const markdown = ['```mermaid', 'flowchart LR', '  A[Host] --> B[Remote]', '```'].join('\n')
+    const { scope } = surface(markdown)
+    const pre = scope.editor!.querySelector('pre[data-language="mermaid"]')!
+    const preview = document.createElement('div')
+    preview.setAttribute('contenteditable', 'false')
+    preview.setAttribute('data-orca-mermaid-preview', 'true')
+    preview.innerHTML =
+      '<div class="orca-mermaid-preview-bar"><span>mermaid</span><button>&lt;/&gt;</button></div>' +
+      '<svg aria-roledescription="flowchart-v2"><text>Host</text></svg>'
+    pre.appendChild(preview)
+
+    expect(currentMarkdown(scope)).toBe(markdown)
+  })
 })
