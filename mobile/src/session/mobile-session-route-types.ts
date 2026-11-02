@@ -85,12 +85,20 @@ export type MobileSessionTab =
     }
   | MobileBrowserTab
 
+export type MobileSessionTabGroup = {
+  id: string
+  activeTabId: string | null
+  tabOrder: string[]
+}
+
 export type SessionTabsResult = {
   worktree: string
   clientHostedPagesUnreconciled?: true
   agentSessionsUnverifiable?: true
   publicationEpoch?: string
   snapshotVersion: number
+  activeGroupId?: string | null
+  tabGroups?: MobileSessionTabGroup[]
   tabs: MobileSessionTab[]
   activeTabId: string | null
   activeTabType: MobileSessionTabType | null

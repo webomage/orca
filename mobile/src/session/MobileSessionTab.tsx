@@ -21,9 +21,12 @@ export function MobileSessionTab({
   agentId,
   details,
   barRef,
+  isDragging = false,
   onLayout,
   onPress,
-  onLongPress
+  onLongPress,
+  onDragMove,
+  onDragEnd
 }: {
   tab: SessionTab
   first: boolean
@@ -33,12 +36,17 @@ export function MobileSessionTab({
   agentId: string | null
   details: SessionTitleCard['tabDetails']
   barRef: RefObject<View | null>
+  isDragging?: boolean
   onLayout: (event: LayoutChangeEvent) => void
   onPress: (source: DetailCardSource) => void
   onLongPress: () => void
+  onDragMove?: (dx: number) => void
+  onDragEnd?: () => void
 }) {
   const t = useMobileTranslation()
   const openerRef = useRef<View>(null)
+  const touchStartRef = useRef<{ x: number; y: number; at: number } | null>(null)
+  const draggingRef = useRef(false)
   const source = useMemo<DetailCardSource>(
     () => ({ key: `tab:${tab.id}`, anchorRef: openerRef, openerRef, barRef, geometry: 'refresh' }),
     [tab.id, barRef]
@@ -54,13 +62,64 @@ export function MobileSessionTab({
           styles.tab,
           first && styles.tabFirst,
           active && styles.tabActive,
-          pressed && styles.tabPressed
+          (pressed || isDragging) && styles.tabPressed
         ]}
         onLayout={(event) => {
           onLayout(event)
           details.refreshSource()
         }}
-        onPress={() => onPress(source)}
+        onTouchStart={(event) => {
+          const touch = event.nativeEvent.touches?.[0]
+          if (!touch) {
+            return
+          }
+          touchStartRef.current = {
+            x: touch.pageX,
+            y: touch.pageY,
+            at: Date.now()
+          }
+          draggingRef.current = false
+        }}
+        onTouchMove={(event) => {
+          const start = touchStartRef.current
+          const touch = event.nativeEvent.touches?.[0]
+          if (!start || !touch || !onDragMove) {
+            return
+          }
+          const dx = touch.pageX - start.x
+          const dy = touch.pageY - start.y
+          if (
+            !draggingRef.current &&
+            (active || Date.now() - start.at >= 160) &&
+            Math.abs(dx) >= 14 &&
+            Math.abs(dx) > Math.abs(dy) * 1.25
+          ) {
+            draggingRef.current = true
+          }
+          if (draggingRef.current) {
+            onDragMove(dx)
+          }
+        }}
+        onTouchEnd={() => {
+          touchStartRef.current = null
+          if (draggingRef.current) {
+            draggingRef.current = false
+            onDragEnd?.()
+          }
+        }}
+        onTouchCancel={() => {
+          touchStartRef.current = null
+          if (draggingRef.current) {
+            draggingRef.current = false
+            onDragEnd?.()
+          }
+        }}
+        onPress={() => {
+          if (draggingRef.current) {
+            return
+          }
+          onPress(source)
+        }}
         accessibilityRole="tab"
         aria-expanded={details.requestedKey === source.key}
         accessibilityLabel={
@@ -72,7 +131,12 @@ export function MobileSessionTab({
             : title
         }
         accessibilityState={{ selected: active }}
-        onLongPress={onLongPress}
+        onLongPress={() => {
+          if (draggingRef.current) {
+            return
+          }
+          onLongPress()
+        }}
         delayLongPress={400}
       >
         <View style={styles.tabLabelRow}>

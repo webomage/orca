@@ -20,6 +20,7 @@ import {
   resolveTabStripTapOffset,
   type TabStripHiddenTabs
 } from './tab-strip-scroll'
+import { resolveDraggedTabTargetIndex } from './mobile-session-tab-reorder'
 import { styles } from './mobile-session-styles'
 import { useKeyboardPersistingTaps } from '../platform/keyboard-persisting-taps'
 import type { MobileSessionController } from './use-mobile-session-controller'
@@ -60,6 +61,7 @@ export const MobileSessionTabStrip = memo(function MobileSessionTabStrip({
     openSessionTabActionSheetAfterKeyboardDismiss,
     setRenameTarget,
     activeHandleRef,
+    reorderSessionTab,
     visibleTabs,
     terminals
   } = controller
@@ -105,6 +107,7 @@ export const MobileSessionTabStrip = memo(function MobileSessionTabStrip({
     [visibleTabs, terminals, t]
   )
   const [hiddenTabs, setHiddenTabs] = useState<TabStripHiddenTabs>({ left: [], right: [] })
+  const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
   const refreshHiddenTabs = () => {
     const next = resolveTabStripHiddenTabs({
       layouts: tabLayoutsRef.current,
@@ -203,6 +206,7 @@ export const MobileSessionTabStrip = memo(function MobileSessionTabStrip({
         <ScrollView
           ref={attachTabStrip}
           horizontal
+          scrollEnabled={draggingTabId === null}
           showsHorizontalScrollIndicator={false}
           style={[styles.tabScroll, inTopBar && styles.tabScrollInTopBar]}
           contentContainerStyle={[styles.tabContent, inTopBar && styles.tabContentInTopBar]}
@@ -239,6 +243,7 @@ export const MobileSessionTabStrip = memo(function MobileSessionTabStrip({
                 tab={tab}
                 first={index === 0 && !inTopBar}
                 active={tab.id === activeSessionTabId}
+                isDragging={draggingTabId === tab.id}
                 title={title}
                 tabState={tabState}
                 agentId={agentId}
@@ -257,6 +262,24 @@ export const MobileSessionTabStrip = memo(function MobileSessionTabStrip({
                   dismiss()
                   triggerMediumImpact()
                   openSessionTabActionSheetAfterKeyboardDismiss(tab)
+                }}
+                onDragMove={(dx) => {
+                  if (draggingTabId !== tab.id) {
+                    dismiss()
+                    setDraggingTabId(tab.id)
+                  }
+                  const targetIndex = resolveDraggedTabTargetIndex({
+                    draggedTabId: tab.id,
+                    dragDx: dx,
+                    tabs: visibleTabs,
+                    layouts: tabLayoutsRef.current
+                  })
+                  if (targetIndex !== null && reorderSessionTab?.(tab.id, targetIndex)) {
+                    triggerMediumImpact()
+                  }
+                }}
+                onDragEnd={() => {
+                  setDraggingTabId(null)
                 }}
               />
             )
