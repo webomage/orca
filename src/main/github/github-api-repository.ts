@@ -18,6 +18,10 @@ import {
   getGitHubApiRepositoryForRemote,
   getOriginGitHubApiRepository
 } from './github-api-repository-remote-probe'
+import {
+  resolveNestedPrRepositoryFallback,
+  resolveSdlcOrNestedIssueRepository
+} from './sdlc-issue-repository'
 
 export {
   githubHostExecOptions,
@@ -70,7 +74,25 @@ export async function getIssueGitHubApiRepository(
     if (origin.status === 'rejected') {
       throw origin.reason
     }
-    return origin.value
+    return resolveSdlcOrNestedIssueRepository({
+      repoPath,
+      origin: origin.value,
+      connectionId,
+      probeRemote: async (targetPath, remoteName) => {
+        if (
+          remoteName === 'upstream' &&
+          !(await shouldProbeGitRemote(targetPath, 'upstream', connectionId, localGitOptions))
+        ) {
+          return null
+        }
+        return getGitHubApiRepositoryForRemote(
+          targetPath,
+          remoteName,
+          connectionId,
+          localGitOptions
+        )
+      }
+    })
   })
 }
 
@@ -115,10 +137,33 @@ export async function resolveGitHubApiRepositoryCandidates(
     if (originResult.status === 'rejected') {
       throw originResult.reason
     }
-    const origin = originResult.value
+    const nestedFallback = await resolveNestedPrRepositoryFallback({
+      repoPath,
+      origin: originResult.value,
+      connectionId,
+      probeRemote: async (targetPath, remoteName) => {
+        if (
+          remoteName === 'upstream' &&
+          !(await shouldProbeGitRemote(targetPath, 'upstream', connectionId, localGitOptions))
+        ) {
+          return null
+        }
+        return getGitHubApiRepositoryForRemote(
+          targetPath,
+          remoteName,
+          connectionId,
+          localGitOptions,
+          {
+            requireVerifiedSshProbe: true
+          }
+        )
+      }
+    })
+    const origin = nestedFallback.originCandidate ?? originResult.value
+    const resolvedUpstream = upstream ?? nestedFallback.upstreamCandidate
     const seen = new Set<string>()
     const candidates: GitHubApiRepository[] = []
-    for (const candidate of [upstream, origin]) {
+    for (const candidate of [resolvedUpstream, origin]) {
       if (!candidate) {
         continue
       }
