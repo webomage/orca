@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { View, TextInput } from 'react-native'
+import { colors } from '../theme/mobile-theme'
 import { tuiAgentDisplayName } from '../../../src/shared/tui-agent-display-names'
 import { hostOs } from '../platform/host-os'
 import { ComposerSendButton } from '../components/composer-input/ComposerSendButton'
@@ -32,7 +33,6 @@ import {
   resolveMobileTerminalTabOwnedAgentId
 } from './mobile-terminal-tab-agent'
 import { terminalDockStyles as dockStyles } from './terminal-dock-styles'
-import { colors } from '../theme/mobile-theme'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { styles } from './mobile-session-styles'
@@ -239,7 +239,6 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
             // Why: Android caches IME inputType at mount, so toggling autocomplete must remount there; iOS updates in place.
             key={hostOs() === 'android' ? `message-ac-${autocompleteEnabled}` : 'message'}
             inputRef={commandInputRef}
-            docked
             monospace={!runsAgent}
             style={dockStyles.composer}
             value={draft}
