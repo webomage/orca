@@ -43,6 +43,7 @@ export function MobileSessionActiveContent({
     terminalTextScale,
     setTerminalTextScale,
     terminalTextScaleRevisionRef,
+    tripleTapEnterEnabled,
     activeHandle,
     terminalSplitActive,
     visibleTerminalHandles,
@@ -59,6 +60,7 @@ export function MobileSessionActiveContent({
     toastMessage,
     handleTerminalInteraction,
     handleTerminalTap,
+    handleTerminalTripleTap,
     browserScreencastSupported,
     showToast,
     nativeChatSendError,
@@ -291,6 +293,7 @@ export function MobileSessionActiveContent({
             }
             terminalTheme={terminal.terminalTheme}
             textScale={terminalTextScale}
+            tripleTapEnterEnabled={tripleTapEnterEnabled}
             onTextScaleChange={(scale) => {
               // Why: pinch-to-zoom reports a new preset; persist it so the size sticks across panes and launches.
               terminalTextScaleRevisionRef.current += 1
@@ -311,6 +314,7 @@ export function MobileSessionActiveContent({
             onTerminalQueryReply={handleTerminalQueryReply}
             onTerminalInteraction={handleTerminalInteraction}
             onTerminalTap={handleTerminalTap}
+            onTerminalTripleTap={handleTerminalTripleTap}
             onFileTap={handleFileTap}
             onOpenUrl={handleTerminalOpenUrl}
           />

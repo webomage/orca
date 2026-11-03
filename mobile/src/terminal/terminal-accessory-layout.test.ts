@@ -382,3 +382,20 @@ it('uses arrow-free Duo defaults only for an untouched layout and preserves expl
   asyncStorageMock.getItem.mockResolvedValue(JSON.stringify(legacy))
   expect((await loadTerminalAccessoryLayout(true)).visibleBuiltInIds).toEqual(['tab', 'arrowDown'])
 })
+
+it('defaults tripleTapEnterEnabled to enabled and round-trips explicit disable', async () => {
+  asyncStorageMock.getItem.mockResolvedValue(null)
+  const initial = await loadTerminalAccessoryLayout()
+  expect(initial.tripleTapEnterEnabled).not.toBe(false)
+
+  asyncStorageMock.setItem.mockResolvedValue(undefined)
+  await saveTerminalAccessoryLayout({ ...initial, tripleTapEnterEnabled: false })
+  const saved = asyncStorageMock.setItem.mock.calls.at(-1)![1]
+  asyncStorageMock.getItem.mockResolvedValue(saved)
+
+  const reloaded = await loadTerminalAccessoryLayout()
+  expect(reloaded.tripleTapEnterEnabled).toBe(false)
+  expect(setTerminalAccessoryBuiltInVisible(reloaded, 'tab', false).tripleTapEnterEnabled).toBe(
+    false
+  )
+})
