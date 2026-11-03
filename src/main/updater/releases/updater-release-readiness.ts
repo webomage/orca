@@ -1,11 +1,15 @@
 import { net } from 'electron'
 import { parse } from 'yaml'
+import { getMainReleaseRepo } from '../../../shared/release-channel'
 
-const RELEASES_DOWNLOAD_BASE = 'https://github.com/stablyai/orca/releases/download'
 export const FETCH_TIMEOUT_MS = 5000
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 export function getReleaseDownloadUrl(tag: string): string {
-  return `${RELEASES_DOWNLOAD_BASE}/${encodeURIComponent(tag)}`
+  return `https://github.com/${getMainReleaseRepo()}/releases/download/${encodeURIComponent(tag)}`
 }
 
 function getPlatformManifestName(): string {
@@ -104,10 +108,12 @@ async function getGitHubReleaseAssetReadiness(assetUrl: string): Promise<Release
 
 async function getReleaseAssetReadiness(tag: string, assetName: string): Promise<ReleaseReadiness> {
   const isRelativeAsset = !/^https?:\/\//i.test(assetName)
+  const repoPrefixRe = new RegExp(
+    `^https://github\\.com/${escapeRegExp(getMainReleaseRepo())}/releases/download/`,
+    'i'
+  )
   const isGitHubReleaseAsset =
-    process.platform === 'win32' &&
-    (isRelativeAsset ||
-      /^https:\/\/github\.com\/stablyai\/orca\/releases\/download\//i.test(assetName))
+    process.platform === 'win32' && (isRelativeAsset || repoPrefixRe.test(assetName))
   const assetUrl = isRelativeAsset
     ? getReleaseAssetUrl(tag, assetName.split('/').findLast(Boolean) ?? assetName)
     : assetName

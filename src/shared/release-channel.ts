@@ -24,6 +24,25 @@ export const DAILY_RELEASE_REPO = 'stablyai/orca-daily'
 export const ADHOC_RELEASE_REPO = 'stablyai/orca-adhoc'
 export const MAIN_RELEASE_REPO = 'stablyai/orca'
 
+const GITHUB_REPO_SLUG_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/
+
+/** Resolve the main/overlay release repository, allowing build-time or env override for fork feeds. */
+export function getMainReleaseRepo(): string {
+  const runtimeOverride =
+    typeof process !== 'undefined' ? process.env?.ORCA_RELEASE_REPO?.trim() : undefined
+  if (runtimeOverride && GITHUB_REPO_SLUG_RE.test(runtimeOverride)) {
+    return runtimeOverride
+  }
+  const compiledOverride =
+    typeof ORCA_RELEASE_REPO !== 'undefined' && typeof ORCA_RELEASE_REPO === 'string'
+      ? ORCA_RELEASE_REPO.trim()
+      : ''
+  if (compiledOverride && GITHUB_REPO_SLUG_RE.test(compiledOverride)) {
+    return compiledOverride
+  }
+  return MAIN_RELEASE_REPO
+}
+
 /** The dev channels, each published to its own repo rather than the main one. */
 const DEDICATED_REPO_CHANNELS = ['hourly', 'daily', 'adhoc'] as const
 
@@ -84,6 +103,9 @@ export function requiresManualDevChannelInstall(options: {
 }
 
 export function getReleaseRepoForChannel(channel: ReleaseChannel): string {
+  if (channel === 'stable' || channel === 'rc') {
+    return getMainReleaseRepo()
+  }
   return CHANNEL_RELEASE_REPOS[channel]
 }
 
@@ -155,6 +177,13 @@ export function parseDevBuildStamp(version: string): Date | null {
   )
 }
 
+/** Fork overlay builds bump the next patch with `-w0m.N` so they upgrade cleanly over stock `X.Y.Z` and seamlessly yield to stock `X.Y.(Z+1)`. */
+const OVERLAY_VERSION = /^\d+\.\d+\.\d+-w0m\.\d+$/
+
+export function isOverlayVersion(version: string): boolean {
+  return OVERLAY_VERSION.test(normalizeTagToVersion(version))
+}
+
 export function getVersionChannel(version: string): ReleaseChannel | null {
   const normalized = normalizeTagToVersion(version)
   if (!isValidAppVersion(normalized)) {
@@ -169,6 +198,9 @@ export function getVersionChannel(version: string): ReleaseChannel | null {
   if (isAdhocVersion(normalized)) {
     return 'adhoc'
   }
+  if (isOverlayVersion(normalized)) {
+    return 'stable'
+  }
   // Why the dev channels are tested first: they are prereleases too, so this
   // catch-all would otherwise file every one of them under rc.
   return normalized.includes('-') ? 'rc' : 'stable'
@@ -177,7 +209,7 @@ export function getVersionChannel(version: string): ReleaseChannel | null {
 /** Dev tags need their publishing repo or links 404. Missing versions use the releases list; latest can fail during GitHub API degradation. */
 export function getReleaseNotesUrlForVersion(version: string | null): string {
   const channel = version ? getVersionChannel(version) : null
-  const repo = channel ? getReleaseRepoForChannel(channel) : MAIN_RELEASE_REPO
+  const repo = channel ? getReleaseRepoForChannel(channel) : getMainReleaseRepo()
   return version
     ? `https://github.com/${repo}/releases/tag/v${normalizeTagToVersion(version)}`
     : `https://github.com/${repo}/releases`
