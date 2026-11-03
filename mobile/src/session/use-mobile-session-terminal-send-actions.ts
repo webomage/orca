@@ -20,6 +20,7 @@ import { useTerminalTextFieldSubmitBinding } from '../terminal/use-terminal-text
 import { useAgentSendKeyboardDismissal } from './use-agent-send-keyboard-dismissal'
 import type { MobileSessionTab } from './mobile-session-route-types'
 import { useMobileSessionTabActionSheetOpener } from './use-mobile-session-tab-action-targets'
+import { useMobileSessionTerminalTripleTap } from './use-mobile-session-terminal-triple-tap'
 import type { MobileSessionTerminalWebviewModel } from './use-mobile-session-terminal-webview'
 import type { TerminalLiveInputSender } from '../terminal/terminal-live-input-sender'
 
@@ -246,8 +247,14 @@ export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminal
     ]
   )
 
+  const handleTerminalTripleTap = useMobileSessionTerminalTripleTap(scope, {
+    dismissKeyboardAfterAgentSend,
+    handleAccessoryKey
+  })
+
   return {
     handleAccessoryKey,
+    handleTerminalTripleTap,
     sendLiveTerminalInput,
     clearSessionTabActionSheetKeyboardListener,
     openSessionTabActionSheet,
