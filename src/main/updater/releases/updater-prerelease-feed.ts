@@ -1,4 +1,5 @@
 import { net } from 'electron'
+import { getMainReleaseRepo, isOverlayVersion } from '../../../shared/release-channel'
 import { compareVersions, isPrereleaseVersion, isValidVersion } from './updater-fallback'
 import {
   FETCH_TIMEOUT_MS,
@@ -12,13 +13,19 @@ import {
   type ReleaseDelayResult
 } from './updater-release-delay'
 
-const ATOM_FEED_URL = 'https://github.com/stablyai/orca/releases.atom'
 const MAX_MANIFEST_PROBE_CANDIDATES = 6
 
 // Atom includes stable and prerelease tags without channel filtering.
 const ENTRY_RE = /<entry>([\s\S]*?)<\/entry>/g
-const TAG_HREF_RE = /href="https:\/\/github\.com\/stablyai\/orca\/releases\/tag\/([^"]+)"/
 const ENTRY_UPDATED_RE = /<updated>([^<]+)<\/updated>/
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function isStableTrackVersion(version: string): boolean {
+  return !isPrereleaseVersion(version) || isOverlayVersion(version)
+}
 
 export function normalizeTagToVersion(tag: string): string {
   return tag.replace(/^v/i, '')
@@ -40,7 +47,10 @@ export function isPerfPrereleaseTag(tag: string): boolean {
 
 async function fetchReleaseFeedTags(): Promise<ReleaseFeedTag[] | null> {
   try {
-    const res = await net.fetch(ATOM_FEED_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+    const repo = getMainReleaseRepo()
+    const atomFeedUrl = `https://github.com/${repo}/releases.atom`
+    const tagHrefRe = new RegExp(`href="https://github\\.com/${escapeRegExp(repo)}/releases/tag/([^"]+)"`)
+    const res = await net.fetch(atomFeedUrl, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
     if (!res.ok) {
       return null
     }
@@ -48,7 +58,7 @@ async function fetchReleaseFeedTags(): Promise<ReleaseFeedTag[] | null> {
     const tags: ReleaseFeedTag[] = []
 
     for (const entry of body.matchAll(ENTRY_RE)) {
-      const tag = entry[1].match(TAG_HREF_RE)?.[1]
+      const tag = entry[1].match(tagHrefRe)?.[1]
       if (!tag) {
         continue
       }
@@ -69,19 +79,21 @@ async function fetchReleaseFeedTags(): Promise<ReleaseFeedTag[] | null> {
 export async function fetchLatestStableReleaseTag(): Promise<string | null> {
   try {
     // Resolve only the release-page redirect; installer redirects continue on to signed storage URLs.
-    const latestUrl = 'https://github.com/stablyai/orca/releases/latest'
+    const repo = getMainReleaseRepo()
+    const latestUrl = `https://github.com/${repo}/releases/latest`
     const response = await requestGitHubReleaseHead(latestUrl)
     if (!response?.redirectUrl || response.statusCode < 300 || response.statusCode >= 400) {
       return null
     }
     const target = new URL(response.redirectUrl, latestUrl)
-    const match = target.pathname.match(/^\/stablyai\/orca\/releases\/tag\/([^/]+)$/)
+    const tagPathRe = new RegExp(`^/${escapeRegExp(repo)}/releases/tag/([^/]+)$`)
+    const match = target.pathname.match(tagPathRe)
     if (target.origin !== 'https://github.com' || !match) {
       return null
     }
     const tag = decodeURIComponent(match[1])
     const version = normalizeTagToVersion(tag)
-    if (!isValidVersion(version) || isPrereleaseVersion(version)) {
+    if (!isValidVersion(version) || !isStableTrackVersion(version)) {
       return null
     }
     return (await getPlatformManifestReadiness(tag)) === 'ready' ? tag : null
@@ -144,7 +156,7 @@ export async function fetchNewerReleaseTagsWithReadiness(
       ? tags.filter(({ tag }) => isPerfPrereleaseTag(tag))
       : includePrerelease
         ? tags.filter(({ tag }) => !isPerfPrereleaseTag(tag))
-        : tags.filter(({ version }) => !isPrereleaseVersion(version))
+        : tags.filter(({ version }) => isStableTrackVersion(version))
   if (!options.minReleaseAgeMs || options.minReleaseAgeMs <= 0) {
     return resolveNewerReleaseTags(channelCandidates, currentVersion, maxTags)
   }
