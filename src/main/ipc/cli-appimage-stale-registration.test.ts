@@ -60,6 +60,10 @@ vi.mock('../startup/hydrate-shell-path', () => ({
 
 vi.mock('../wsl/discovery/distro-catalog', () => ({ getDefaultWslDistro: vi.fn() }))
 
+import {
+  repairStaleLocalAppImageCliRegistration,
+  resetStaleAppImageRepairState
+} from '../cli/local-cli-registration-coordinator'
 import { registerCliHandlers } from './cli'
 
 const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform')
@@ -370,5 +374,25 @@ describe('AppImage CLI registration startup repair', () => {
 
     await expect(installStatusHandler()()).resolves.toBe(installed)
     expect(mocks.install).toHaveBeenCalledOnce()
+  })
+
+  it('repairs a stale AppImage CLI registration on background desktop startup without opening Settings', async () => {
+    resetStaleAppImageRepairState()
+    const stale = status('stale')
+    const installed = status('installed')
+    mocks.getStatus.mockResolvedValue(stale)
+    mocks.install.mockResolvedValue(installed)
+
+    await expect(repairStaleLocalAppImageCliRegistration()).resolves.toBe(installed)
+    expect(mocks.install).toHaveBeenCalledOnce()
+  })
+
+  it('skips background startup repair when not running from a Linux AppImage', async () => {
+    resetStaleAppImageRepairState()
+    mocks.resolveAppImageRuntimeIdentity.mockReturnValue(null)
+
+    await expect(repairStaleLocalAppImageCliRegistration()).resolves.toBeNull()
+    expect(mocks.getStatus).not.toHaveBeenCalled()
+    expect(mocks.install).not.toHaveBeenCalled()
   })
 })
