@@ -1,0 +1,280 @@
+name: w0m Overlay Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: Force a new -w0m.N overlay release even when upstream tag and branch SHAs have not changed
+        required: false
+        type: boolean
+        default: false
+      upstream_tag:
+        description: Explicit stablyai/orca stable tag to assemble onto (defaults to latest published stable release)
+        required: false
+        type: string
+        default: ''
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: w0m-overlay-release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: github.repository == 'webomage/orca'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      should_build: ${{ steps.assemble-plan.outputs.should_build }}
+      version: ${{ steps.assemble-plan.outputs.version }}
+      tag: ${{ steps.assemble-plan.outputs.tag }}
+      upstream_tag: ${{ steps.assemble-plan.outputs.upstream_tag }}
+      base_sha: ${{ steps.assemble-plan.outputs.base_sha }}
+      included_count: ${{ steps.assemble-plan.outputs.included_count }}
+      retired_count: ${{ steps.assemble-plan.outputs.retired_count }}
+      skipped_count: ${{ steps.assemble-plan.outputs.skipped_count }}
+    steps:
+      - name: Checkout overlay controller branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Stage overlay controller scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp config/w0m-overlay-branches.json "$RUNNER_TEMP/w0m-overlay-branches.json"
+          cp config/scripts/assemble-w0m-overlay.mjs "$RUNNER_TEMP/assemble-w0m-overlay.mjs"
+
+      - name: Fetch upstream and fork release metadata
+        id: meta
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_UPSTREAM_TAG: ${{ inputs.upstream_tag }}
+        run: |
+          set -euo pipefail
+          git remote add upstream https://github.com/stablyai/orca.git 2>/dev/null || git remote set-url upstream https://github.com/stablyai/orca.git
+          git fetch --filter=blob:none --tags --force upstream "+refs/heads/main:refs/remotes/upstream/main"
+          mapfile -t want_branches < <(jq -r '([.updaterBranch] + [.branches[].branch]) | unique | .[]' "$RUNNER_TEMP/w0m-overlay-branches.json")
+          refspecs=()
+          remote_heads="$(git ls-remote --heads origin | awk '{sub(/^refs\/heads\//, "", $2); print $2}')"
+          for br in "${want_branches[@]}"; do
+            if grep -Fxq "$br" <<<"$remote_heads"; then
+              refspecs+=("+refs/heads/${br}:refs/remotes/origin/${br}")
+            fi
+          done
+          if (( ${#refspecs[@]} > 0 )); then
+            git fetch --filter=blob:none --force origin "${refspecs[@]}"
+          fi
+
+          if [[ -n "${INPUT_UPSTREAM_TAG:-}" ]]; then
+            upstream_tag="$INPUT_UPSTREAM_TAG"
+          else
+            upstream_tag="$(gh api repos/stablyai/orca/releases/latest --jq '.tag_name')"
+          fi
+          if [[ -z "$upstream_tag" ]]; then
+            echo "::error::Failed to resolve latest stablyai/orca stable release tag"
+            exit 1
+          fi
+          echo "upstream_tag=$upstream_tag" >> "$GITHUB_OUTPUT"
+
+          releases_json="$(gh api 'repos/webomage/orca/releases?per_page=50')"
+          existing_tags="$(jq -c '[.[].tag_name]' <<<"$releases_json")"
+          echo "existing_tags=$existing_tags" >> "$GITHUB_OUTPUT"
+          jq -r '([.[] | select(.draft == false)][0].body) // ""' <<<"$releases_json" > "$RUNNER_TEMP/previous-release-body.md"
+
+          merged_prs="$(gh api 'repos/stablyai/orca/pulls?state=closed&per_page=100' | jq -c '[.[] | select(.merged_at != null and .head.repo.owner.login == "webomage") | .head.ref] | unique' || echo '[]')"
+          echo "merged_branches=$merged_prs" >> "$GITHUB_OUTPUT"
+
+      - name: Compute self-healing overlay assembly plan
+        id: assemble-plan
+        shell: bash
+        env:
+          UPSTREAM_TAG: ${{ steps.meta.outputs.upstream_tag }}
+          EXISTING_TAGS: ${{ steps.meta.outputs.existing_tags }}
+          MERGED_BRANCHES: ${{ steps.meta.outputs.merged_branches }}
+          FORCE_REBUILD: ${{ inputs.force_rebuild }}
+        run: |
+          set -euo pipefail
+          extra_args=()
+          if [[ "${FORCE_REBUILD:-false}" == "true" ]]; then
+            extra_args+=(--force)
+          fi
+          node "$RUNNER_TEMP/assemble-w0m-overlay.mjs" \
+            --mode plan \
+            --config "$RUNNER_TEMP/w0m-overlay-branches.json" \
+            --upstream-tag "$UPSTREAM_TAG" \
+            --existing-tags-json "$EXISTING_TAGS" \
+            --previous-body-file "$RUNNER_TEMP/previous-release-body.md" \
+            --merged-branches-json "$MERGED_BRANCHES" \
+            --notes-out "$RUNNER_TEMP/plan-notes.md" \
+            "${extra_args[@]}"
+          cat "$RUNNER_TEMP/plan-notes.md" >> "$GITHUB_STEP_SUMMARY"
+
+  build-linux:
+    if: github.repository == 'webomage/orca' && needs.plan.outputs.should_build == 'true'
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          fetch-tags: true
+
+      - name: Assemble w0m overlay source tree
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTREAM_TAG: ${{ needs.plan.outputs.upstream_tag }}
+          TARGET_VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          cp config/w0m-overlay-branches.json "$RUNNER_TEMP/w0m-overlay-branches.json"
+          cp config/scripts/assemble-w0m-overlay.mjs "$RUNNER_TEMP/assemble-w0m-overlay.mjs"
+
+          git remote add upstream https://github.com/stablyai/orca.git 2>/dev/null || git remote set-url upstream https://github.com/stablyai/orca.git
+          git fetch --filter=blob:none --tags --force upstream "+refs/heads/main:refs/remotes/upstream/main"
+          mapfile -t want_branches < <(jq -r '([.updaterBranch] + [.branches[].branch]) | unique | .[]' "$RUNNER_TEMP/w0m-overlay-branches.json")
+          refspecs=()
+          remote_heads="$(git ls-remote --heads origin | awk '{sub(/^refs\/heads\//, "", $2); print $2}')"
+          for br in "${want_branches[@]}"; do
+            if grep -Fxq "$br" <<<"$remote_heads"; then
+              refspecs+=("+refs/heads/${br}:refs/remotes/origin/${br}")
+            fi
+          done
+          if (( ${#refspecs[@]} > 0 )); then
+            git fetch --filter=blob:none --force origin "${refspecs[@]}"
+          fi
+
+          merged_prs="$(gh api 'repos/stablyai/orca/pulls?state=closed&per_page=100' | jq -c '[.[] | select(.merged_at != null and .head.repo.owner.login == "webomage") | .head.ref] | unique' || echo '[]')"
+
+          node "$RUNNER_TEMP/assemble-w0m-overlay.mjs" \
+            --mode assemble \
+            --config "$RUNNER_TEMP/w0m-overlay-branches.json" \
+            --upstream-tag "$UPSTREAM_TAG" \
+            --version "$TARGET_VERSION" \
+            --merged-branches-json "$merged_prs" \
+            --notes-out "$RUNNER_TEMP/release-notes.md"
+
+          cat "$RUNNER_TEMP/release-notes.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          check-latest: true
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      - name: Use external node-gyp on Linux
+        run: |
+          npm install -g node-gyp@11.5.0
+          echo "npm_config_node_gyp=$(npm root -g)/node-gyp/bin/node-gyp.js" >> "$GITHUB_ENV"
+
+      - name: Resolve electron-builder cache key
+        id: eb-versions
+        shell: bash
+        run: node -p "const d = require('./package.json').devDependencies; 'versions=electron' + d.electron + '-builder' + d['electron-builder']" >> "$GITHUB_OUTPUT"
+
+      - name: Cache electron-builder downloads
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: w0m-electron-builder-linux-x64-${{ steps.eb-versions.outputs.versions }}
+          restore-keys: |
+            w0m-electron-builder-linux-x64-
+
+      - name: Install Linux runtime verification dependencies
+        run: sudo apt-get update && sudo apt-get install -y python3-gi gir1.2-atspi-2.0 at-spi2-core xclip xdotool
+
+      - name: Install root dependencies
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: pnpm install --frozen-lockfile
+
+      - name: Install mobile dependencies
+        uses: ./.github/actions/install-mobile-dependencies
+
+      - name: Build Orca release bundles for webomage/orca feed
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          ORCA_RELEASE_REPO: webomage/orca
+          ORCA_CI_MAIN_SOURCEMAPS: '0'
+        run: pnpm run build:release
+
+      - name: Gate runtime file-watcher process isolation
+        run: |
+          node config/scripts/runtime-file-watcher-fault-harness.mjs
+          ELECTRON_RUN_AS_NODE=1 pnpm exec electron config/scripts/runtime-file-watcher-fault-harness.mjs
+
+      - name: Package Linux x64 AppImage and latest-linux.yml
+        env:
+          ORCA_RELEASE_REPO: webomage/orca
+          ORCA_PUBLISH_OWNER: webomage
+          ORCA_PUBLISH_REPO: orca
+          ORCA_PUBLISH_RELEASE_TYPE: release
+        run: |
+          set -euo pipefail
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --linux AppImage --x64 --publish never
+          test -f dist/orca-linux.AppImage
+          test -f dist/latest-linux.yml
+          cat dist/latest-linux.yml
+
+      - name: Smoke packaged node-pty on Linux glibc floor
+        run: node config/scripts/run-linux-packaged-node-pty-floor-smoke.mjs --app-dir dist/linux-unpacked
+
+      - name: Publish GitHub Release on webomage/orca
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.plan.outputs.tag }}
+          VERSION: ${{ needs.plan.outputs.version }}
+          UPSTREAM_TAG: ${{ needs.plan.outputs.upstream_tag }}
+        run: |
+          set -euo pipefail
+          head_sha="$(git rev-parse HEAD)"
+          git -c tag.gpgSign=false tag -f "$TAG" "$head_sha"
+          git push origin "refs/tags/$TAG" --force
+
+          assets=(dist/orca-linux.AppImage dist/latest-linux.yml)
+          if [[ -f dist/orca-linux.AppImage.blockmap ]]; then
+            assets+=(dist/orca-linux.AppImage.blockmap)
+          fi
+
+          if gh release view "$TAG" --repo webomage/orca >/dev/null 2>&1; then
+            gh release upload "$TAG" "${assets[@]}" --clobber --repo webomage/orca
+            gh release edit "$TAG" \
+              --repo webomage/orca \
+              --title "Orca v${VERSION} (w0m overlay on ${UPSTREAM_TAG})" \
+              --notes-file "$RUNNER_TEMP/release-notes.md" \
+              --latest
+          else
+            gh release create "$TAG" "${assets[@]}" \
+              --repo webomage/orca \
+              --title "Orca v${VERSION} (w0m overlay on ${UPSTREAM_TAG})" \
+              --notes-file "$RUNNER_TEMP/release-notes.md" \
+              --latest
+          fi

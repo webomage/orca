@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "upstreamRepo": "stablyai/orca",
+  "overlayRepo": "webomage/orca",
+  "updaterBranch": "feat/w0m-overlay-updater-feed",
+  "branches": [
+    {
+      "branch": "fix/linux-cli-stale-appimage-and-dispatcher",
+      "description": "Repair stale AppImage CLI wrapper at desktop startup and publish bare orca dispatcher"
+    },
+    {
+      "branch": "fix/webgl-atlas-version-desync-recovery",
+      "description": "Recover shared WebGL glyph atlas version desync on settled pane reveal"
+    },
+    {
+      "branch": "feat/nested-subfolder-git-and-sdlc-repo",
+      "description": "Discover nested subfolder git repos inside umbrella roots and resolve .w0m/sdlc.json issue targets"
+    },
+    {
+      "branch": "feat/mobile-session-tab-reorder",
+      "description": "Session tab drag/sheet reordering and session.tabs.move relay write"
+    },
+    {
+      "branch": "feat/cross-worktree-tab-move",
+      "description": "Cross-worktree tab drag-and-drop and Move to Workspace menu"
+    },
+    {
+      "branch": "feat/obsidian-ofm-engine",
+      "description": "Obsidian-flavored markdown engine, frontmatter aliases, and foldable callouts"
+    },
+    {
+      "branch": "fix/mobile-landscape-safe-area-insets",
+      "description": "Horizontal edge padding for MobileHomeScreen in landscape"
+    },
+    {
+      "branch": "fix/mobile-markdown-external-tab-read",
+      "description": "Authorize open desktop markdown tabs and orphaned previews outside workspace root"
+    },
+    {
+      "branch": "feat/agent-collaboration-board",
+      "description": "FIFO resource locks and agent collaboration board"
+    },
+    {
+      "branch": "feat/mobile-camera-capture-chat",
+      "description": "Camera photo capture in mobile chat and terminal sessions"
+    },
+    {
+      "branch": "feat/mobile-live-input-password-mask",
+      "description": "Asterisk password masking and show/hide toggle in mobile terminal dock"
+    },
+    {
+      "branch": "feat/macos-deep-link-worktree",
+      "description": "macOS deep-link protocol for worktree creation"
+    },
+    {
+      "branch": "feat/macos-deep-link-shortcuts",
+      "description": "macOS deep-link protocol for orchestration shortcuts"
+    },
+    {
+      "branch": "feat/zeroclaw-agent-connector",
+      "description": "ZeroClaw agent connector, AI Vault scanner, and skills discovery"
+    }
+  ]
+}
