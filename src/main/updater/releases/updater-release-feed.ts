@@ -6,6 +6,7 @@ import {
 import { getReleaseDownloadUrl } from './updater-release-readiness'
 import { toDelayedUpdate } from './updater-release-delay'
 import { updateDelayDaysToMs } from '../../../shared/update-delay'
+import { isOverlayVersion } from '../../../shared/release-channel'
 import { isMissingUpdateManifestFailure, isPrereleaseVersion } from './updater-fallback'
 import type { CheckFailureSource } from '../lifecycle/updater-state'
 import type { UpdateCheckVariant } from '../lifecycle/updater-types'
@@ -122,7 +123,9 @@ export abstract class UpdaterReleaseFeed extends UpdaterInstallExecution {
     const currentVersion = app.getVersion()
     const isPerfCheck = variant === 'perf'
     const includePrerelease =
-      isPerfCheck || this.includePrereleaseActive || isPrereleaseVersion(currentVersion)
+      isPerfCheck ||
+      this.includePrereleaseActive ||
+      (isPrereleaseVersion(currentVersion) && !isOverlayVersion(currentVersion))
     // Perf builds are explicit one-off opt-ins; "install now" consumes its bypass on this pin.
     const delayDays = isPerfCheck || this.ignoreUpdateDelayOnce ? 0 : this.readUpdateDelayDays()
     this.ignoreUpdateDelayOnce = false
