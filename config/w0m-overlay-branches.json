@@ -78,7 +78,7 @@
     },
     {
       "branch": "feat/mobile-four-side-edge-arrows",
-      "description": "Sticky 4-side screen-edge navigation arrows (Edge Pills, Edge Strips, Floating Orbs) in mobile panes"
+      "description": "Sticky 4-side screen-edge navigation arrows, bottom-right settings dock, and zoom-stable Gamepad HUD in mobile panes"
     },
     {
       "branch": "fix/mobile-live-input-prompt-backload",
