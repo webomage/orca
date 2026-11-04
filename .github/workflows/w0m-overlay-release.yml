@@ -255,10 +255,6 @@ jobs:
           UPSTREAM_TAG: ${{ needs.plan.outputs.upstream_tag }}
         run: |
           set -euo pipefail
-          head_sha="$(git rev-parse HEAD)"
-          git -c tag.gpgSign=false tag -f "$TAG" "$head_sha"
-          git push origin "refs/tags/$TAG" --force
-
           assets=(dist/orca-linux.AppImage dist/latest-linux.yml)
           if [[ -f dist/orca-linux.AppImage.blockmap ]]; then
             assets+=(dist/orca-linux.AppImage.blockmap)
@@ -274,6 +270,7 @@ jobs:
           else
             gh release create "$TAG" "${assets[@]}" \
               --repo webomage/orca \
+              --target beta \
               --title "Orca v${VERSION} (w0m overlay on ${UPSTREAM_TAG})" \
               --notes-file "$RUNNER_TEMP/release-notes.md" \
               --latest
