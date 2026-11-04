@@ -2123,7 +2123,13 @@
       "removeShortcutMessage": "Remove this custom shortcut?",
       "renameTerminal": "Rename Terminal",
       "terminalName": "Terminal name",
-      "allowAutoClose": "Allow Auto-Close"
+      "allowAutoClose": "Allow Auto-Close",
+      "detectingSystemMonitors": "Detecting Monitors",
+      "otherServerMonitors": "Monitors on Another Server",
+      "systemMonitorsUnavailable": "Monitors Unavailable",
+      "noSystemMonitors": "No Monitors Detected",
+      "systemMonitors": "Monitors (*top)",
+      "systemMonitorsHint": "Launch an installed system or container monitor in a new terminal tab."
     },
     "tabStrip": {
       "tabStatus": "{{title}}, {{status}}",

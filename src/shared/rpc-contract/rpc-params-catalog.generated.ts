@@ -1369,6 +1369,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'plugins.shotReplay': PluginShotReplayParams,
   'preflight.check': PreflightCheck,
   'preflight.detectAgents': PreflightProjectAgentDetection,
+  'preflight.detectMonitors': PreflightAgentDetection,
   'preflight.detectRemoteAgents': PreflightDetectRemoteAgents,
   'preflight.detectRemoteWindowsTerminalCapabilities':
     PreflightDetectRemoteWindowsTerminalCapabilities,
