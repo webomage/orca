@@ -88,6 +88,9 @@ export const SESSION_TAB_METHODS = [
           : {}),
         ...(params.launchAgent ? { launchAgent: params.launchAgent } : {}),
         ...(params.viewMode ? { viewMode: params.viewMode } : {}),
+        ...(params.terminalColorQueryReplies
+          ? { terminalColorQueryReplies: params.terminalColorQueryReplies }
+          : {}),
         activate: params.activate,
         select: params.select,
         clientNavigationId: pairedDeviceId,

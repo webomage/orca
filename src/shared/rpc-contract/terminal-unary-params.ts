@@ -218,7 +218,7 @@ export const TerminalWait = TerminalHandle.extend({
   timeoutMs: OptionalFiniteNumber
 })
 
-const TerminalColorQueryReplyColorsParam = z.object({
+export const TerminalColorQueryReplyColorsParam = z.object({
   foreground: z.string().max(128).optional(),
   background: z.string().max(128).optional()
 })

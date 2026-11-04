@@ -51,6 +51,7 @@ import {
 } from './agent-launch-target-authorization'
 import { resolveUnlaunchedIntent } from './agent-launch-intent-resolution'
 import {
+  agentLaunchView,
   publishEarlyTab,
   withPlacement,
   type AgentLaunchView
@@ -112,10 +113,7 @@ function runLegacyAgentLaunch(
         callerRendersStructured: callerRendersLaunchedChat(context, params.agent)
       }),
       context,
-      {
-        early: null,
-        presentation: params.presentation
-      }
+      agentLaunchView(null, params)
     )
   if (params.target.kind === 'create-worktree' && params.target.create.clientMutationId) {
     const { repo, repoHostId } = params.target.create
@@ -176,10 +174,7 @@ async function executeReplaySafeAgentLaunch(
   }
   early?.executing()
   return withEarlyTab(early, () =>
-    executeAdmittedAgentLaunch(params, context, admission, {
-      early,
-      presentation: params.presentation
-    })
+    executeAdmittedAgentLaunch(params, context, admission, agentLaunchView(early, params))
   )
 }
 

@@ -46,7 +46,7 @@ export function agentLaunchSurfaceFactory(
   view: AgentLaunchView = { early: null, presentation: undefined }
 ): AgentLaunchSurfaceFactory {
   const movesHostWindow = agentLaunchMovesHostWindow(context)
-  const { early: earlyTab, presentation } = view
+  const { early: earlyTab, presentation, terminalColorQueryReplies } = view
   return {
     createStructuredSession: async ({
       worktreeId,
@@ -162,6 +162,7 @@ export function agentLaunchSurfaceFactory(
         ...(paneKey ? { ...paneIdentity(paneKey), requireFreshPane: true } : {}),
         ...(launchSource ? { launchSource } : {}),
         ...(viewMode ? { viewMode } : {}),
+        ...(terminalColorQueryReplies ? { terminalColorQueryReplies } : {}),
         ...(accountEnv ? { accountEnv: { ...accountEnv } } : {}),
         ...(presentation && (!movesHostWindow || !hasEarlyTab || presentation === 'background')
           ? { presentation: movesHostWindow ? presentation : ('background' as const) }
