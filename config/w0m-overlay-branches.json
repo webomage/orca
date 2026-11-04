@@ -83,6 +83,10 @@
     {
       "branch": "fix/mobile-live-input-prompt-backload",
       "description": "Backload active terminal prompt into Live Input and retain per-tab sessions"
+    },
+    {
+      "branch": "feat/system-and-docker-monitors",
+      "description": "Auto-detect installed *top and Docker/container TUIs and launch from Desktop + and Mobile New Tab"
     }
   ]
 }
