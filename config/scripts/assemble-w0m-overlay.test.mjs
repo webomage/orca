@@ -157,6 +157,35 @@ test('assembleOverlayInRepo merges clean branches, retires squash-merged branche
     })
     assert.equal(rerunPlan.shouldBuild, false)
     assert.equal(rerunPlan.version, '1.4.248-w0m.2')
+
+    // Supplying origin/overlay/<branch> adapts an inter-branch conflict without altering origin/<branch>
+    git(dir, 'checkout', '--detach', 'refs/remotes/origin/feat/clean-one')
+    writeFileSync(join(dir, 'clean.txt'), 'clean enhancement\nadapted conflicting content\n')
+    git(dir, 'add', 'clean.txt')
+    git(dir, 'commit', '--no-gpg-sign', '-m', 'feat: adapted conflicting feature on clean-one')
+    git(dir, 'update-ref', 'refs/remotes/origin/overlay/feat/conflicting', 'HEAD')
+
+    const adapted = assembleOverlayInRepo({
+      repoDir: dir,
+      config,
+      upstreamTag: 'v1.4.247',
+      existingOverlayTags: ['v1.4.248-w0m.1'],
+      previousReleaseBody: assembled.releaseNotes,
+      dryRun: false
+    })
+    assert.equal(adapted.shouldBuild, true)
+    assert.equal(adapted.version, '1.4.248-w0m.2')
+    assert.deepEqual(
+      adapted.included.map((x) => x.branch),
+      ['feat/clean-one', 'feat/conflicting']
+    )
+    assert.deepEqual(adapted.skipped, [])
+    assert.equal(
+      readFileSync(join(dir, 'clean.txt'), 'utf8'),
+      'clean enhancement\nadapted conflicting content\n'
+    )
+    assert.match(adapted.releaseNotes, /adapted via `overlay\/feat\/conflicting`/)
+    assert.equal(manifestsEqual(parseManifestFromReleaseBody(adapted.releaseNotes), adapted.manifest), true)
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

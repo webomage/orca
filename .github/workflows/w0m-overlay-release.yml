@@ -13,8 +13,6 @@ on:
         required: false
         type: string
         default: ''
-  schedule:
-    - cron: '17 */6 * * *'
 
 permissions:
   contents: read
@@ -69,6 +67,9 @@ jobs:
           for br in "${want_branches[@]}"; do
             if grep -Fxq "$br" <<<"$remote_heads"; then
               refspecs+=("+refs/heads/${br}:refs/remotes/origin/${br}")
+            fi
+            if grep -Fxq "overlay/${br}" <<<"$remote_heads"; then
+              refspecs+=("+refs/heads/overlay/${br}:refs/remotes/origin/overlay/${br}")
             fi
           done
           if (( ${#refspecs[@]} > 0 )); then
@@ -153,6 +154,9 @@ jobs:
           for br in "${want_branches[@]}"; do
             if grep -Fxq "$br" <<<"$remote_heads"; then
               refspecs+=("+refs/heads/${br}:refs/remotes/origin/${br}")
+            fi
+            if grep -Fxq "overlay/${br}" <<<"$remote_heads"; then
+              refspecs+=("+refs/heads/overlay/${br}:refs/remotes/origin/overlay/${br}")
             fi
           done
           if (( ${#refspecs[@]} > 0 )); then

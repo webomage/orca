@@ -142,7 +142,8 @@ export function manifestsEqual(left, right) {
   for (let i = 0; i < leftIncluded.length; i += 1) {
     if (
       leftIncluded[i]?.branch !== rightIncluded[i]?.branch ||
-      leftIncluded[i]?.sha !== rightIncluded[i]?.sha
+      leftIncluded[i]?.sha !== rightIncluded[i]?.sha ||
+      (leftIncluded[i]?.overlaySha ?? null) !== (rightIncluded[i]?.overlaySha ?? null)
     ) {
       return false
     }
@@ -233,8 +234,11 @@ export function formatOverlayReleaseNotes({
   } else {
     for (const item of included) {
       const desc = item.description ? ` — ${item.description}` : ''
+      const overlayNote = item.overlaySha
+        ? `, adapted via \`overlay/${item.branch}\` @ \`${item.overlaySha.slice(0, 11)}\``
+        : ''
       lines.push(
-        `- \`${item.branch}\` (\`${item.sha.slice(0, 11)}\`, ${item.commitCount} commit${item.commitCount === 1 ? '' : 's'})${desc}`
+        `- \`${item.branch}\` (\`${item.sha.slice(0, 11)}\`, ${item.commitCount} commit${item.commitCount === 1 ? '' : 's'}${overlayNote})${desc}`
       )
     }
   }
@@ -394,6 +398,42 @@ export function assembleOverlayInRepo({
       const conflicts = conflictOut ? conflictOut.split('\n').filter(Boolean) : []
       runGit(repoDir, ['cherry-pick', '--abort'], { allowFailure: true })
       runGit(repoDir, ['reset', '--hard', beforeHead])
+
+      const overlayRef = `${remoteName}/overlay/${branch}`
+      const overlaySha = resolveRefCommit(repoDir, overlayRef)
+      if (overlaySha) {
+        const pickOverlay = runGit(
+          repoDir,
+          [...gitIdentityArgs, 'cherry-pick', '--no-gpg-sign', overlaySha],
+          { allowFailure: true }
+        )
+        if (pickOverlay.ok) {
+          included.push({
+            branch,
+            sha: tipSha,
+            overlaySha,
+            commitCount: commits.length,
+            description: entry.description ?? ''
+          })
+          continue
+        }
+        const overlayConflictOut = runGit(repoDir, ['diff', '--name-only', '--diff-filter=U'], {
+          allowFailure: true
+        }).stdout
+        const overlayConflicts = overlayConflictOut
+          ? overlayConflictOut.split('\n').filter(Boolean)
+          : conflicts
+        runGit(repoDir, ['cherry-pick', '--abort'], { allowFailure: true })
+        runGit(repoDir, ['reset', '--hard', beforeHead])
+        skipped.push({
+          branch,
+          sha: tipSha,
+          reason: `merge conflict (including overlay/${branch})`,
+          conflicts: overlayConflicts
+        })
+        continue
+      }
+
       skipped.push({
         branch,
         sha: tipSha,
@@ -408,7 +448,11 @@ export function assembleOverlayInRepo({
     upstreamTag,
     baseSha,
     updaterSha,
-    included: included.map((item) => ({ branch: item.branch, sha: item.sha }))
+    included: included.map((item) =>
+      item.overlaySha
+        ? { branch: item.branch, sha: item.sha, overlaySha: item.overlaySha }
+        : { branch: item.branch, sha: item.sha }
+    )
   }
   const previousManifest = parseManifestFromReleaseBody(previousReleaseBody)
   const shouldBuild = Boolean(force) || !manifestsEqual(manifest, previousManifest)

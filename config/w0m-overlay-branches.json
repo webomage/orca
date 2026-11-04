@@ -65,12 +65,24 @@
       "description": "Send Enter key on triple-tap gesture in mobile terminal sessions"
     },
     {
-      "branch": "fix/mobile-live-input-prompt-backload",
-      "description": "Backload active terminal prompt into Live Input and retain per-tab sessions"
-    },
-    {
       "branch": "feat/subagent-display-and-floating-category",
       "description": "Default-enabled subagent flat/tree display options and collapsible Floating agents category"
+    },
+    {
+      "branch": "fix/terminal-smooth-resize-and-replay",
+      "description": "Hold painted terminal surface across SIGWINCH resize and ?2026 repaint bursts on desktop and mobile"
+    },
+    {
+      "branch": "feat/mobile-terminal-4-tap-alt-m",
+      "description": "Send Alt+M on 4-tap gesture in mobile terminal sessions with 3-tap vs 4-tap settle disambiguation"
+    },
+    {
+      "branch": "feat/mobile-four-side-edge-arrows",
+      "description": "Sticky 4-side screen-edge navigation arrows (Edge Pills, Edge Strips, Floating Orbs) in mobile panes"
+    },
+    {
+      "branch": "fix/mobile-live-input-prompt-backload",
+      "description": "Backload active terminal prompt into Live Input and retain per-tab sessions"
     }
   ]
 }
