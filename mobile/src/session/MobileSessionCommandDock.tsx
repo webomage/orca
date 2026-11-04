@@ -183,6 +183,11 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
                 }
               }}
               onKeyPress={handleLiveInputKeyPress}
+              onFocus={() => {
+                if (!inputMasked) {
+                  void controller.requestTerminalPromptBackload()
+                }
+              }}
               onSubmitEditing={submitLiveInput}
               placeholder={t('session.terminalLiveInputStatus.liveInput', 'Live input')}
               placeholderTextColor={colors.textMuted}

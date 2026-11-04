@@ -128,4 +128,5 @@ export type TerminalWebViewHandle = {
   doSelectAll: () => void
   // Await the latest init’s ready notification so follow-up fitting uses its post-layout cell box.
   awaitReady: () => Promise<void>
+  readPromptBackload?: () => Promise<string>
 }
