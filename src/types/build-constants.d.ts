@@ -10,7 +10,5 @@ declare const ORCA_DIAGNOSTICS_TOKEN_URL: string | null
 // Full commit the build was made from (`git rev-parse HEAD`); official skill installs pin to it.
 declare const ORCA_BUILD_COMMIT: string
 
-// Optional fork overlay release repository (`owner/repo`) baked at build time.
-declare const ORCA_RELEASE_REPO: string | null
-
+// ORCA_RELEASE_REPO is declared and read in one place: src/shared/release-channel.ts.
 // ORCA_LAYOUT_OWNER is declared and read in one place: src/shared/layout-owner-switch.ts.
