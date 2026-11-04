@@ -59,6 +59,18 @@
     {
       "branch": "feat/zeroclaw-agent-connector",
       "description": "ZeroClaw agent connector, AI Vault scanner, and skills discovery"
+    },
+    {
+      "branch": "feat/mobile-terminal-triple-tap-enter",
+      "description": "Send Enter key on triple-tap gesture in mobile terminal sessions"
+    },
+    {
+      "branch": "fix/mobile-live-input-prompt-backload",
+      "description": "Backload active terminal prompt into Live Input and retain per-tab sessions"
+    },
+    {
+      "branch": "feat/subagent-display-and-floating-category",
+      "description": "Default-enabled subagent flat/tree display options and collapsible Floating agents category"
     }
   ]
 }
