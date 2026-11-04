@@ -164,6 +164,7 @@ export class RepoLifecycleOperations {
         | 'badgeColor'
         | 'repoIcon'
         | 'upstream'
+        | 'issueRepository'
         | 'gitRemoteIdentity'
         | 'defaultJiraProject'
         | 'hookSettings'

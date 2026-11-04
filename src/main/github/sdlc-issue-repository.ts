@@ -1,4 +1,5 @@
-import { readFile, readdir, stat } from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
+import { mkdir, readFile, readdir, stat, unlink, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import type { GitHubApiRepository } from './github-api-repository'
 import { isValidGitHubApiRepository } from './github-api-repository-validation'
@@ -28,6 +29,132 @@ export function parseGitHubOwnerRepoSlug(raw: unknown): GitHubApiRepository | nu
     host: 'github.com'
   }
   return isValidGitHubApiRepository(candidate) ? candidate : null
+}
+
+function parseIssueRepositoryValue(raw: unknown): GitHubApiRepository | null {
+  if (typeof raw === 'string') {
+    return parseGitHubOwnerRepoSlug(raw)
+  }
+  if (!raw || typeof raw !== 'object') {
+    return null
+  }
+  const record = raw as { owner?: unknown; repo?: unknown; host?: unknown }
+  if (typeof record.owner !== 'string' || typeof record.repo !== 'string') {
+    return null
+  }
+  const candidate: GitHubApiRepository = {
+    owner: record.owner.trim(),
+    repo: record.repo.trim(),
+    host: typeof record.host === 'string' && record.host.trim() ? record.host.trim() : 'github.com'
+  }
+  return isValidGitHubApiRepository(candidate) ? candidate : null
+}
+
+export async function readLocalIssueRepositoryOverride(
+  repoPath: string
+): Promise<GitHubApiRepository | null> {
+  try {
+    const raw = await readFile(join(repoPath, '.orca', 'project.json'), 'utf8')
+    const parsed = JSON.parse(raw) as { issueRepository?: unknown }
+    return parseIssueRepositoryValue(parsed?.issueRepository)
+  } catch {
+    return null
+  }
+}
+
+const projectedIssueRepoCache = new Map<
+  string,
+  { expiresAt: number; value: GitHubApiRepository | null }
+>()
+const PROJECTED_ISSUE_REPO_CACHE_TTL_MS = 2_000
+
+export function readProjectedLocalIssueRepositorySync(repoPath: string): GitHubApiRepository | null {
+  const now = Date.now()
+  const cached = projectedIssueRepoCache.get(repoPath)
+  if (cached && cached.expiresAt > now) {
+    return cached.value
+  }
+  let resolved: GitHubApiRepository | null = null
+  try {
+    const rawOverride = readFileSync(join(repoPath, '.orca', 'project.json'), 'utf8')
+    const parsedOverride = JSON.parse(rawOverride) as { issueRepository?: unknown }
+    resolved = parseIssueRepositoryValue(parsedOverride?.issueRepository)
+  } catch {
+    resolved = null
+  }
+  if (!resolved) {
+    try {
+      const rawSdlc = readFileSync(join(repoPath, '.w0m', 'sdlc.json'), 'utf8')
+      const parsedSdlc = JSON.parse(rawSdlc) as {
+        vcs?: { provider?: unknown; repo?: unknown }
+      }
+      const provider =
+        typeof parsedSdlc?.vcs?.provider === 'string'
+          ? parsedSdlc.vcs.provider.trim().toLowerCase()
+          : 'github'
+      const vcsRepo = provider === 'github' ? parseGitHubOwnerRepoSlug(parsedSdlc?.vcs?.repo) : null
+      if (vcsRepo) {
+        let isWrapperOrigin = false
+        try {
+          const gitConfig = readFileSync(join(repoPath, '.git', 'config'), 'utf8')
+          isWrapperOrigin = /-w0m(?:\.git)?\s*$/im.test(gitConfig)
+        } catch {
+          isWrapperOrigin = false
+        }
+        if (!isWrapperOrigin) {
+          resolved = vcsRepo
+        }
+      }
+    } catch {
+      resolved = null
+    }
+  }
+  projectedIssueRepoCache.set(repoPath, {
+    expiresAt: now + PROJECTED_ISSUE_REPO_CACHE_TTL_MS,
+    value: resolved
+  })
+  return resolved
+}
+
+export async function writeLocalIssueRepositoryOverride(
+  repoPath: string,
+  repository: { owner: string; repo: string; host?: string } | null
+): Promise<void> {
+  projectedIssueRepoCache.delete(repoPath)
+  let rootStat: Awaited<ReturnType<typeof stat>>
+  try {
+    rootStat = await stat(repoPath)
+  } catch {
+    return
+  }
+  if (!rootStat.isDirectory()) {
+    return
+  }
+  const orcaDir = join(repoPath, '.orca')
+  const filePath = join(orcaDir, 'project.json')
+  let existing: Record<string, unknown> = {}
+  try {
+    const parsed = JSON.parse(await readFile(filePath, 'utf8')) as unknown
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      existing = { ...(parsed as Record<string, unknown>) }
+    }
+  } catch {
+    existing = {}
+  }
+  const normalized = repository ? parseIssueRepositoryValue(repository) : null
+  if (normalized) {
+    existing.issueRepository = normalized
+    await mkdir(orcaDir, { recursive: true })
+    await writeFile(filePath, `${JSON.stringify(existing, null, 2)}\n`, 'utf8')
+    return
+  }
+  delete existing.issueRepository
+  if (Object.keys(existing).length === 0) {
+    await unlink(filePath).catch(() => {})
+    return
+  }
+  await mkdir(orcaDir, { recursive: true })
+  await writeFile(filePath, `${JSON.stringify(existing, null, 2)}\n`, 'utf8')
 }
 
 export function isGovernanceWrapperRepository(repo: GitHubApiRepository | null): boolean {
@@ -139,6 +266,11 @@ export async function resolveSdlcOrNestedIssueRepository(args: {
 }): Promise<GitHubApiRepository | null> {
   if (args.connectionId) {
     return args.origin
+  }
+
+  const localOverride = await readLocalIssueRepositoryOverride(args.repoPath)
+  if (localOverride) {
+    return localOverride
   }
 
   const sdlcConfig = await readSdlcWorkspaceConfig(args.repoPath)
