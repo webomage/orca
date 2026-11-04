@@ -14,7 +14,7 @@
     },
     {
       "branch": "feat/nested-subfolder-git-and-sdlc-repo",
-      "description": "Discover nested subfolder git repos inside umbrella roots and resolve .w0m/sdlc.json issue targets"
+      "description": "Auto-discover .w0m/sdlc.json and nested subfolder git repos under origin/Project modes and support manual owner/repo mapping"
     },
     {
       "branch": "feat/mobile-session-tab-reorder",
@@ -78,7 +78,7 @@
     },
     {
       "branch": "feat/mobile-four-side-edge-arrows",
-      "description": "Sticky 4-side screen-edge navigation arrows, bottom-right settings dock, and zoom-stable Gamepad HUD in mobile panes"
+      "description": "Half-transparent 4-side screen-edge navigation arrows, bottom-right settings dock, and zoom-stable Gamepad HUD in mobile panes"
     },
     {
       "branch": "fix/mobile-live-input-prompt-backload",
@@ -87,6 +87,10 @@
     {
       "branch": "feat/system-and-docker-monitors",
       "description": "Auto-detect installed *top and Docker/container TUIs and launch from Desktop + and Mobile New Tab"
+    },
+    {
+      "branch": "fix/mobile-terminal-theme-enforcement",
+      "description": "Enforce mobile light/dark appearance scheme on TerminalWebView palette and frame background"
     }
   ]
 }
