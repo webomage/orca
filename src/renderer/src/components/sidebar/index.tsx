@@ -7,6 +7,7 @@ import SidebarNav from './SidebarNav'
 import { setSidebarLiveWidth } from './sidebar-live-width'
 import SetupScriptPromptCard from './SetupScriptPromptCard'
 import WorktreeList from './WorktreeList'
+import FloatingWorkspaceSidebarSection from './FloatingWorkspaceSidebarSection'
 import WslMovedProjectsSection from './WslMovedProjectsSection'
 import SidebarToolbar from './SidebarToolbar'
 import WorkspaceKanbanDrawer from './WorkspaceKanbanDrawer'
@@ -196,6 +197,7 @@ function Sidebar({
                   onWorkspaceBoardDragPreviewCommit={solidifyWorkspaceBoardFromDrag}
                   onWorkspaceBoardDragPreviewCancel={cancelWorkspaceBoardDragPreview}
                 />
+                <FloatingWorkspaceSidebarSection />
                 <WslMovedProjectsSection />
               </>
             )}

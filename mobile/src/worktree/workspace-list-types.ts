@@ -12,7 +12,7 @@ export type Worktree = {
   sectionListKey?: string
   /** Show the existing project-name surface for a child from another repo. */
   showProjectName?: boolean
-  workspaceKind?: 'git' | 'folder-workspace'
+  workspaceKind?: 'git' | 'folder-workspace' | 'floating'
   worktreeId: string
   repoId: string
   hostId?: ExecutionHostId
@@ -107,7 +107,7 @@ export type Section = {
   /** The view's collapse key when it differs from `key`; a header's copies share it. */
   collapseKey?: string
   title: string
-  icon?: 'pin'
+  icon?: 'pin' | 'floating'
   repo?: SectionRepo
   isProjectGroup?: boolean
   projectGroupDepth?: number

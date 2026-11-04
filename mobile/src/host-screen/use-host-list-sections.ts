@@ -134,7 +134,9 @@ function useFeedHostListSections({
             lastVisited,
             liveRows: displayWorktrees,
             repoHostIdByRepoId: state.repoHostIdByRepoId,
-            search: state.search
+            search: state.search,
+            collapsedGroups,
+            filterRepoIds: state.view.filters.filterRepoIds
           })
         : preFeed
           ? buildPreFeedSections({
@@ -142,7 +144,8 @@ function useFeedHostListSections({
               view: state.view,
               search: state.search,
               repoHostIdByRepoId: state.repoHostIdByRepoId,
-              lastVisited
+              lastVisited,
+              collapsedGroups
             })
           : NO_SECTIONS,
     [
@@ -152,7 +155,8 @@ function useFeedHostListSections({
       state.view,
       state.repoHostIdByRepoId,
       state.search,
-      lastVisited
+      lastVisited,
+      collapsedGroups
     ]
   )
 

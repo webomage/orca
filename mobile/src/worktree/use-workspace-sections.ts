@@ -16,6 +16,7 @@ import {
   type Worktree
 } from './workspace-list-sections'
 import { buildFilterRepos, type WorkspaceSectionRepo } from './workspace-filter-repos'
+import { buildFloatingWorkspaceSection } from './floating-workspace-section'
 
 export function useWorkspaceSections(args: {
   displayWorktrees: Worktree[]
@@ -94,7 +95,22 @@ export function useWorkspaceSections(args: {
     ]
   )
 
-  const rawSections = useMemo(() => plan.render(collapsedGroups), [plan, collapsedGroups])
+  const floating = useMemo(
+    () =>
+      buildFloatingWorkspaceSection({
+        liveRows: displayWorktrees,
+        lastVisited: null,
+        collapsedGroups,
+        search,
+        filterRepoIds: filters.filterRepoIds
+      }),
+    [displayWorktrees, collapsedGroups, search, filters.filterRepoIds, t]
+  )
+
+  const rawSections = useMemo(() => {
+    const base = plan.render(collapsedGroups)
+    return floating ? [...base, floating.rawSection] : base
+  }, [plan, collapsedGroups, floating])
 
   const sections = useMemo(
     () =>

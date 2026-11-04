@@ -8,7 +8,8 @@ import {
   Text,
   View
 } from 'react-native'
-import { ChevronRight, FolderTree, Pin } from 'lucide-react-native'
+import { ChevronRight, FolderTree, Pin, Terminal } from 'lucide-react-native'
+import { DEFAULT_SUBAGENT_DISPLAY_MODE } from '../../../src/shared/constants'
 import { AuthFailedBanner } from '../components/AuthFailedBanner'
 import { Presence } from '../components/AutoHeight'
 import { DisclosureChevron } from '../components/DisclosureChevron'
@@ -237,10 +238,11 @@ export function HostWorkspaceList({
                       <ChevronRight size={12} color={colors.textMuted} />
                     </DisclosureChevron>
                   </View>
-                  {section.icon === 'pin' && (
+                  {section.icon === 'pin' ? (
                     <Pin size={12} color={colors.textMuted} style={styles.sectionIcon} />
-                  )}
-                  {state.view.groupBy === 'repo' && section.isProjectGroup ? (
+                  ) : section.icon === 'floating' ? (
+                    <Terminal size={12} color={colors.textMuted} style={styles.sectionIcon} />
+                  ) : state.view.groupBy === 'repo' && section.isProjectGroup ? (
                     <FolderTree size={12} color={colors.textPrimary} style={styles.sectionIcon} />
                   ) : state.view.groupBy === 'repo' ? (
                     <View style={styles.sectionRepoIcon}>
@@ -286,11 +288,15 @@ export function HostWorkspaceList({
               hideRepo={state.view.groupBy === 'repo' && !item.showProjectName}
               cardDetails={cardDetails}
               agentActivityDisplayMode={state.view.agentActivityDisplayMode}
+              showSubagents={state.view.showSubagents !== false}
+              subagentDisplayMode={state.view.subagentDisplayMode ?? DEFAULT_SUBAGENT_DISPLAY_MODE}
               onPress={actions.openWorktreeSession}
               onAgentPress={actions.openWorktreeSession}
               statusLive={connState === 'connected' && !item.hostContextHealthLabel}
               onLongPress={
-                item.workspaceKind === 'folder-workspace' ? undefined : state.setActionTarget
+                item.workspaceKind === 'folder-workspace' || item.workspaceKind === 'floating'
+                  ? undefined
+                  : state.setActionTarget
               }
               onToggleLineage={settings.toggleWorktreeLineage}
             />

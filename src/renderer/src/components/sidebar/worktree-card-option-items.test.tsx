@@ -14,7 +14,11 @@ const setWorktreeCardMode = vi.fn()
 const setWorktreeCardProperties = vi.fn()
 const setAgentActivityDisplayMode = vi.fn()
 const setShowAgentModels = vi.fn()
+const setShowSubagents = vi.fn()
+const setSubagentDisplayMode = vi.fn()
 let showAgentModels: boolean | undefined
+let showSubagents: boolean | undefined
+let subagentDisplayMode: 'flat' | 'tree' | undefined
 
 let settings = { compactWorktreeCards: false, experimentalNewWorktreeCardStyle: false }
 let projectGroups: unknown[] = []
@@ -38,6 +42,10 @@ vi.mock('@/store', () => ({
       persistedUIReady: true,
       showAgentModels,
       setShowAgentModels,
+      showSubagents,
+      setShowSubagents,
+      subagentDisplayMode,
+      setSubagentDisplayMode,
       projectGroups,
       setAgentActivityDisplayMode,
       setWorktreeCardMode,
@@ -147,7 +155,11 @@ beforeEach(() => {
     'inline-agents'
   ]
   showAgentModels = undefined
+  showSubagents = undefined
+  subagentDisplayMode = undefined
   setShowAgentModels.mockReset()
+  setShowSubagents.mockReset()
+  setSubagentDisplayMode.mockReset()
   setAgentActivityDisplayMode.mockReset()
   setWorktreeCardMode.mockReset()
   setWorktreeCardProperties.mockReset()
@@ -221,4 +233,27 @@ describe('worktree card menu items', () => {
     expect(container?.textContent).toContain('Branch / folder path')
     expect(container?.textContent).not.toContain('Branch name')
   })
+
+  it.each([false, true])(
+    'defaults subagents on in flat mode and lets users switch to tree or hide them (new style: %s)',
+    (newStyle) => {
+      settings.experimentalNewWorktreeCardStyle = newStyle
+      renderMenu()
+
+      const showButton = [...document.querySelectorAll('button')].find(
+        (candidate) => candidate.textContent === 'Show subagents'
+      )
+      expect(showButton?.dataset.checked).toBe('true')
+
+      const treeButton = document.querySelector<HTMLButtonElement>(
+        '[data-radio-group-value="flat"] [data-radio-item-value="tree"]'
+      )
+      expect(treeButton).not.toBeNull()
+      act(() => treeButton?.click())
+      expect(setSubagentDisplayMode).toHaveBeenCalledWith('tree')
+
+      act(() => showButton?.click())
+      expect(setShowSubagents).toHaveBeenCalledWith(false)
+    }
+  )
 })

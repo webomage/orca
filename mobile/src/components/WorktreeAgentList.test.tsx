@@ -17,7 +17,8 @@ vi.mock('react-native', () => ({
 }))
 vi.mock('lucide-react-native', () => ({
   ChevronDown: 'ChevronDown',
-  ChevronRight: 'ChevronRight'
+  ChevronRight: 'ChevronRight',
+  CornerDownRight: 'CornerDownRight'
 }))
 vi.mock('./AgentStateDot', () => ({ AgentStateDot: () => null }))
 vi.mock('./MobileAgentIcon', () => ({ MobileAgentIcon: () => null }))
@@ -222,5 +223,75 @@ describe('WorktreeAgentList', () => {
       )
     })
     expect(paneKeys()).toEqual(['parent', 'busy', 'idle-1', 'idle-2'])
+  })
+
+  it('displays subagents alongside agents at root depth with subagent icon in flat mode and hides them when disabled', async () => {
+    await act(async () => {
+      renderer = create(
+        createElement(WorktreeAgentList, {
+          agents: [
+            {
+              ...agent('agent-1'),
+              subagentObservation: 'live',
+              subagents: [
+                {
+                  id: 'sub-1',
+                  agentType: 'research',
+                  description: 'Sidebar Researcher',
+                  state: 'working',
+                  startedAt: 1_000
+                }
+              ]
+            }
+          ],
+          now: 2_000,
+          unvisited: false,
+          statusLive: true,
+          subagentDisplayMode: 'flat'
+        })
+      )
+    })
+
+    const summary = findByHostType(renderer!.root, 'Pressable')
+    expect(summary.props.accessibilityLabel).toBe('Expand 2 agents')
+    await act(async () => summary.props.onPress({ stopPropagation: vi.fn() }))
+
+    const rows = renderer!.root.findAll(
+      (node) => node.props.agent !== undefined && node.props.depth !== undefined
+    )
+    expect(rows).toHaveLength(2)
+    expect(rows[0].props.depth).toBe(0)
+    expect(rows[1].props.depth).toBe(0)
+    expect(rows[1].props.childRow).toMatchObject({
+      id: 'sub-1',
+      name: 'Sidebar Researcher'
+    })
+    expect(findAllByHostType(rows[1], 'CornerDownRight')).toHaveLength(1)
+
+    act(() => renderer?.unmount())
+    await act(async () => {
+      renderer = create(
+        createElement(WorktreeAgentList, {
+          agents: [
+            {
+              ...agent('agent-1'),
+              subagentObservation: 'live',
+              subagents: [{ id: 'sub-1', state: 'working', startedAt: 1_000 }]
+            }
+          ],
+          now: 2_000,
+          unvisited: false,
+          statusLive: true,
+          showSubagents: false,
+          subagentDisplayMode: 'flat'
+        })
+      )
+    })
+
+    const visibleRows = renderer!.root.findAll(
+      (node) => node.props.agent !== undefined && node.props.depth !== undefined
+    )
+    expect(visibleRows).toHaveLength(1)
+    expect(visibleRows[0].props.childRow).toBeUndefined()
   })
 })
