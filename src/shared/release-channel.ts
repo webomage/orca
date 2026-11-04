@@ -24,6 +24,9 @@ export const DAILY_RELEASE_REPO = 'stablyai/orca-daily'
 export const ADHOC_RELEASE_REPO = 'stablyai/orca-adhoc'
 export const MAIN_RELEASE_REPO = 'stablyai/orca'
 
+/** Substituted by electron.vite.config.ts; absent in tests, the CLI and the web client. */
+declare const ORCA_RELEASE_REPO: string | null | undefined
+
 const GITHUB_REPO_SLUG_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/
 
 /** Resolve the main/overlay release repository, allowing build-time or env override for fork feeds. */
@@ -34,6 +37,7 @@ export function getMainReleaseRepo(): string {
     return runtimeOverride
   }
   const compiledOverride =
+    // oxlint-disable-next-line unicorn/no-typeof-undefined -- undeclared outside electron-vite builds; a bare read throws.
     typeof ORCA_RELEASE_REPO !== 'undefined' && typeof ORCA_RELEASE_REPO === 'string'
       ? ORCA_RELEASE_REPO.trim()
       : ''
