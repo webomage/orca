@@ -74,7 +74,7 @@
     },
     {
       "branch": "feat/mobile-four-side-edge-arrows",
-      "description": "Half-transparent 4-side screen-edge navigation arrows, bottom-right settings dock, and zoom-stable Gamepad HUD in mobile panes"
+      "description": "Half-transparent 4-side screen-edge navigation arrows (Floating Orbs default, opt-in switcher chip), and zoom-stable Gamepad HUD in mobile panes"
     },
     {
       "branch": "fix/mobile-live-input-prompt-backload",
