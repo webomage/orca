@@ -29,10 +29,6 @@
       "description": "Obsidian-flavored markdown engine, frontmatter aliases, and foldable callouts"
     },
     {
-      "branch": "fix/mobile-landscape-safe-area-insets",
-      "description": "Horizontal edge padding for MobileHomeScreen in landscape"
-    },
-    {
       "branch": "fix/mobile-markdown-external-tab-read",
       "description": "Authorize open desktop markdown tabs and orphaned previews outside workspace root"
     },
