@@ -3,6 +3,7 @@ import type { BrowserTabCreateRequest } from '../../shared/browser-tab-create-re
 import { ipcRenderer } from 'electron'
 import type { PersistedUIState } from '../../shared/persisted-ui-state-types'
 import type { WorktreeDeepLink } from '../../shared/worktree-deep-link'
+import type { OrchestrationDeepLink } from '../../shared/orchestration-deep-link'
 import type { KeybindingActionId } from '../../shared/keybindings'
 import type { PreloadApi } from '../api-types'
 import type {
@@ -62,6 +63,14 @@ export const uiStateAndMenuCommandsApi = {
   },
   consumePendingWorktreeDeepLink: (): Promise<WorktreeDeepLink | null> =>
     ipcRenderer.invoke('ui:consumePendingWorktreeDeepLink'),
+  onOpenOrchestrationDeepLink: (callback: (link: OrchestrationDeepLink) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, link: OrchestrationDeepLink): void =>
+      callback(link)
+    ipcRenderer.on('ui:openOrchestrationDeepLink', listener)
+    return () => ipcRenderer.removeListener('ui:openOrchestrationDeepLink', listener)
+  },
+  consumePendingOrchestrationDeepLink: (): Promise<OrchestrationDeepLink | null> =>
+    ipcRenderer.invoke('ui:consumePendingOrchestrationDeepLink'),
   onOpenMarkdownFiles: (callback: (documents: MarkdownDocument[]) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, documents: MarkdownDocument[]): void =>
       callback(documents)

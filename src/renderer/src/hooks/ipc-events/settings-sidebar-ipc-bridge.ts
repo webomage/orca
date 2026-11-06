@@ -31,7 +31,11 @@ function dispatchWorktreeDeepLinkWhenReposReady(
 
   const initialState = useAppStore.getState()
   const currentRepos = initialState.repos ?? []
-  if (!link.repo?.trim() || currentRepos.length > 0 || !initialState.awaitLocalRepoCatalogSettlement) {
+  if (
+    !link.repo?.trim() ||
+    currentRepos.length > 0 ||
+    !initialState.awaitLocalRepoCatalogSettlement
+  ) {
     initialState.openWorktreeDeepLink(link)
     return
   }
@@ -109,6 +113,15 @@ export function registerSettingsAndSidebarIpcBridge(unsubs: (() => void)[]): voi
     unsubs.push(unsubscribeOpenWorktreeDeepLink)
   }
 
+  const unsubscribeOpenOrchestrationDeepLink = window.api.ui.onOpenOrchestrationDeepLink?.(
+    (link) => {
+      useAppStore.getState().openOrchestrationDeepLink(link)
+    }
+  )
+  if (unsubscribeOpenOrchestrationDeepLink) {
+    unsubs.push(unsubscribeOpenOrchestrationDeepLink)
+  }
+
   // Why: a tray "Settings…" click can fire before this attaches; consume any queued intent (?. guards stale preload).
   void window.api.ui
     .consumePendingOpenSettings?.()
@@ -148,6 +161,17 @@ export function registerSettingsAndSidebarIpcBridge(unsubs: (() => void)[]): voi
       .then((link) => {
         if (link) {
           dispatchWorktreeDeepLinkWhenReposReady(link, unsubs)
+        }
+      })
+      .catch(() => {})
+  }
+
+  const pendingOrchestration = window.api.ui.consumePendingOrchestrationDeepLink?.()
+  if (pendingOrchestration && typeof pendingOrchestration.then === 'function') {
+    void pendingOrchestration
+      .then((link) => {
+        if (link) {
+          useAppStore.getState().openOrchestrationDeepLink(link)
         }
       })
       .catch(() => {})
