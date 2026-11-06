@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { AppState, StyleSheet, View, Text, Pressable } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
@@ -21,6 +21,7 @@ type TerminalPaneViewProps = {
   handle: string
   active: boolean
   visible?: boolean
+  retainMounted?: boolean
   splitIndex?: number
   splitDirection?: 'row' | 'column'
   splitFrame?: TerminalFrame
@@ -53,10 +54,11 @@ type TerminalPaneViewProps = {
   onCellBoxChange: (handle: string) => void
 }
 
-export function TerminalPaneView({
+export const TerminalPaneView = memo(function TerminalPaneView({
   handle,
   active,
   visible = active,
+  retainMounted = true,
   splitIndex,
   splitDirection = 'row',
   splitFrame,
@@ -94,6 +96,11 @@ export function TerminalPaneView({
   if (visible && !visited) {
     setVisited(true)
   }
+  useEffect(() => {
+    if (!visible && !retainMounted && visited) {
+      setVisited(false)
+    }
+  }, [retainMounted, visible, visited])
   const [routeFocused, setRouteFocused] = useState(false)
   useFocusEffect(
     useCallback(() => {
@@ -121,7 +128,7 @@ export function TerminalPaneView({
       ? terminalPaneKeyboardLayout(splitFrame, splitDirection, splitIndex, keyboardInset)
       : null
 
-  if (!visible && !visited) {
+  if (!visible && (!visited || !retainMounted)) {
     return null
   }
 
@@ -215,7 +222,7 @@ export function TerminalPaneView({
       </View>
     </View>
   )
-}
+})
 
 const styles = themedStyleSheet(() => ({
   terminalPane: {

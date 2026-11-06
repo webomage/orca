@@ -331,6 +331,7 @@ describe('useTerminalPaneGlobalEffects', () => {
     }
     registerManagerForReset(manager)
 
+    const isVisibleRef = { current: false }
     beginHookRender()
     useTerminalPaneGlobalEffects({
       tabId: 'tab-1',
@@ -338,7 +339,7 @@ describe('useTerminalPaneGlobalEffects', () => {
       containerRef: { current: null },
       paneTransportsRef: { current: new Map() },
       isActiveRef: { current: false },
-      isVisibleRef: { current: false },
+      isVisibleRef,
       paneCount: 1,
       isSyncFitEnabled: true,
       isWorktreeActive: true,
@@ -351,8 +352,11 @@ describe('useTerminalPaneGlobalEffects', () => {
     expect(pane.container.querySelector).toHaveBeenCalledWith('.native-chat-pane-shell')
     if (covered) {
       expect(mocks.focusActivePane).not.toHaveBeenCalled()
+      expect(isVisibleRef.current).toBe(false)
+      expect(manager.suspendRendering).toHaveBeenCalledTimes(1)
     } else {
       expect(mocks.focusActivePane).toHaveBeenCalledWith(manager)
+      expect(isVisibleRef.current).toBe(true)
     }
   })
 

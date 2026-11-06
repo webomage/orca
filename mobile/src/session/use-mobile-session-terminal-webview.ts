@@ -115,6 +115,12 @@ export function useMobileSessionTerminalWebview(scope: MobileSessionTabSwitching
       terminalRefs.current.set(handle, ref)
     } else {
       terminalRefs.current.delete(handle)
+      queueMicrotask(() => {
+        if (!terminalRefs.current.has(handle)) {
+          webReadyHandlesRef.current.delete(handle)
+          initializedHandlesRef.current.delete(handle)
+        }
+      })
       terminalGestureInputBucketsRef.current.delete(handle)
       const queued = terminalGestureInputQueuesRef.current.get(handle)
       if (queued?.timer) {
@@ -273,21 +279,13 @@ export function useMobileSessionTerminalWebview(scope: MobileSessionTabSwitching
   }, [visibleKey, connState, subscribeToTerminal, unsubscribeTerminal])
 
   useEffect(() => {
-    if (activeSessionTab?.type !== 'markdown') {
-      return
-    }
-    const doc = markdownDocs.get(activeSessionTab.id)
-    if (!doc) {
+    if (activeSessionTab?.type === 'markdown' && !markdownDocs.get(activeSessionTab.id)) {
       void readMarkdownTab(activeSessionTab)
     }
   }, [activeSessionTab, markdownDocs, readMarkdownTab])
 
   useEffect(() => {
-    if (activeSessionTab?.type !== 'file') {
-      return
-    }
-    const doc = fileDocs.get(activeSessionTab.id)
-    if (!doc) {
+    if (activeSessionTab?.type === 'file' && !fileDocs.get(activeSessionTab.id)) {
       void readFileTab(activeSessionTab)
     }
   }, [activeSessionTab, fileDocs, readFileTab])
