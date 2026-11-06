@@ -10,6 +10,7 @@ import type { FeatureInteractionId } from '../../../../shared/feature-interactio
 import { omitPairingLocalUiFields } from '../../../../shared/pairing-local-ui-fields'
 import type { PairedUiState } from '../../../../shared/pairing-local-ui-fields'
 import { createWebWorktreeDeepLinkApi } from './web-worktree-deep-link-api'
+import { createWebOrchestrationDeepLinkApi } from './web-orchestration-deep-link-api'
 import {
   clipboardHasImage,
   readClipboardImageThumbnail,
@@ -43,6 +44,7 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
   return {
     ...createWebJiraFilterStateApi(),
     ...createWebWorktreeDeepLinkApi(),
+    ...createWebOrchestrationDeepLinkApi(),
     /** Hydrates from the active host after replaying pending roots, falling back to local state on failure or host changes. */
     get: async () => {
       try {
