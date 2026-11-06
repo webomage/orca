@@ -64,4 +64,18 @@ describe('fixed latency text reveal', () => {
     advance(50)
     expect(returned.result.current.text).toHaveLength(2000)
   })
+  it('pauses reveal pacing and snaps text immediately while the document is hidden', () => {
+    const hiddenGetter = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    try {
+      const wrapper = within()
+      const row = renderHook(() => useNativeChatPacedText('reply', 'a '.repeat(1000), true), {
+        wrapper
+      })
+      expect(row.result.current.text).toHaveLength(2000)
+      expect(row.result.current.revealing).toBe(false)
+      expect(row.result.current.fading).toBe(false)
+    } finally {
+      hiddenGetter.mockRestore()
+    }
+  })
 })

@@ -6,6 +6,7 @@ import {
   useState,
   useSyncExternalStore
 } from 'react'
+import { AppState } from 'react-native'
 import {
   playNativeChatTextReveal,
   receiveNativeChatText,
@@ -49,6 +50,33 @@ const FRAMES: NativeChatTextRevealFrames = {
   }
 }
 
+function isSurfaceBackgrounded(): boolean {
+  if (typeof document !== 'undefined' && document.hidden) {
+    return true
+  }
+  return AppState?.currentState != null ? AppState.currentState !== 'active' : false
+}
+
+function useSurfaceBackgrounded(): boolean {
+  const [backgrounded, setBackgrounded] = useState(isSurfaceBackgrounded)
+  useEffect(() => {
+    const sync = (): void => setBackgrounded(isSurfaceBackgrounded())
+    const subscription = AppState?.addEventListener?.('change', (state) => {
+      setBackgrounded((typeof document !== 'undefined' && document.hidden) || state !== 'active')
+    })
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', sync)
+    }
+    return () => {
+      subscription?.remove()
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', sync)
+      }
+    }
+  }, [])
+  return backgrounded
+}
+
 export type MobileNativeChatPacedText = { text: string; revealing: boolean }
 
 export function useMobileNativeChatPacedText(
@@ -60,8 +88,9 @@ export function useMobileNativeChatPacedText(
   const chat = useContext(MobileNativeChatReplyRevealsContext)
   const growth = useContext(MobileNativeChatGrowthHoldContext)
   const held = useSyncExternalStore(growth.subscribe, growth.held, growth.held)
+  const backgrounded = useSurfaceBackgrounded()
   const list = paced ? (chat ?? undefined) : undefined
-  const immediate = list === undefined || list.reducedMotion
+  const immediate = list === undefined || list.reducedMotion || backgrounded
   const [initial] = useState(() =>
     startNativeChatTextReveal(
       text,

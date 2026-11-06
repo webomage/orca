@@ -21,6 +21,7 @@ export function installNativeWindowsPanePolicy(session: ConnectPanePtySession): 
   })
   session.shouldApplyNativeWindowsRewriteRefresh = session.isNativeWindowsConpty
   session.shouldApplyWindowsRendererUnicodeRefresh = CLIENT_PLATFORM === 'win32'
+  session.shouldHoldSynchronizedForegroundOutput = true
   session.shouldProtectNativeWindowsSynchronizedOutput = session.isNativeWindowsConpty
   session.unsubscribeWindowsDoneTerminalModeReset = null
   if (session.isNativeWindowsConpty) {

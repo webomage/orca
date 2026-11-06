@@ -8,6 +8,7 @@ import { Animated, View, Text, Pressable, ActivityIndicator } from 'react-native
 import { saveTerminalTextScale } from '../storage/preferences'
 import { MobileBrowserPane } from '../browser/MobileBrowserPane'
 import { TerminalPaneView } from '../terminal/session/TerminalPaneView'
+import { useWarmTerminalHandles } from './use-warm-terminal-handles'
 import { MobileNativeChatOverlay } from './native-chat/MobileNativeChatOverlay'
 import { mobileSessionNativeChatHostOutage } from './native-chat/mobile-native-chat-host-outage'
 import { MobileAgentMessageProvider } from './native-chat/transcript/MobileAgentMessageProvider'
@@ -98,6 +99,20 @@ export function MobileSessionActiveContent({
   const { keyboardLift, activeTerminalKeyboardLift, toastAnimatedStyle } =
     useMobileSessionContentKeyboardLift(controller)
   const openUrlInOrca = useOpenUrlInOrca(controller)
+  const warmTerminalHandles = useWarmTerminalHandles(
+    terminals,
+    visibleTerminalHandles,
+    activeHandle
+  )
+  const handleTextScaleChange = useCallback(
+    (scale: number) => {
+      // Why: pinch-to-zoom reports a new preset; persist it so the size sticks across panes and launches.
+      terminalTextScaleRevisionRef.current += 1
+      setTerminalTextScale(scale)
+      void saveTerminalTextScale(scale)
+    },
+    [setTerminalTextScale, terminalTextScaleRevisionRef]
+  )
   const hostProfile = useHostProfile(hostId)
   const hostTitle = useHostDisplay(hostProfile).title
   const nativeChatHostOutage = mobileSessionNativeChatHostOutage(controller, hostTitle, t)
@@ -250,6 +265,7 @@ export function MobileSessionActiveContent({
             visible={
               visibleTerminalHandles?.includes(terminal.handle) ?? terminal.handle === activeHandle
             }
+            retainMounted={warmTerminalHandles.has(terminal.handle)}
             splitIndex={
               terminalSplitActive && visibleTerminalHandles.includes(terminal.handle)
                 ? visibleTerminalHandles.indexOf(terminal.handle)
@@ -283,12 +299,7 @@ export function MobileSessionActiveContent({
             textScale={terminalTextScale}
             tripleTapEnterEnabled={tripleTapEnterEnabled}
             quadTapAltMEnabled={quadTapAltMEnabled}
-            onTextScaleChange={(scale) => {
-              // Why: pinch-to-zoom reports a new preset; persist it so the size sticks across panes and launches.
-              terminalTextScaleRevisionRef.current += 1
-              setTerminalTextScale(scale)
-              void saveTerminalTextScale(scale)
-            }}
+            onTextScaleChange={handleTextScaleChange}
             onRef={controller.setTerminalWebViewRef}
             onWebReady={controller.handleTerminalWebReady}
             onCellBoxChange={controller.notifyTerminalCellBoxChange}

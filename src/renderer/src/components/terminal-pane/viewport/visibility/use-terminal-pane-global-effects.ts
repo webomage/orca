@@ -64,7 +64,11 @@ export function useTerminalPaneGlobalEffects({
   const renderingSuspendedByVisibilityRef = useRef(false)
   const hiddenReasonRef = useRef<TerminalHiddenReason | null>(null)
   const warmedWhileHiddenRef = useRef(false)
-  const rendererVisible = isVisible && isWorktreeActive
+  const coveredByNativeChat =
+    isChatViewMode &&
+    paneCount === 1 &&
+    Boolean(managerRef.current && activePaneIsCoveredByNativeChat(managerRef.current))
+  const rendererVisible = isVisible && isWorktreeActive && !coveredByNativeChat
   // Watch leaf → PTY rebinds even without activity/visibility changes so main grants the live PTY its interactive reserve.
   const activeLeafPtyId = useAppStore((state) => {
     const layout = state.terminalLayoutsByTabId[tabId]
@@ -192,7 +196,7 @@ export function useTerminalPaneGlobalEffects({
     }
   }, [isActive, panePtyBindingsRef])
 
-  useActiveRendererPty({ isActive, isVisible, isWorktreeActive, activeLeafPtyId })
+  useActiveRendererPty({ isActive, isVisible: rendererVisible, isWorktreeActive, activeLeafPtyId })
 
   useTerminalPaneExpandEvent({ tabId, managerRef, toggleExpandPane })
 
