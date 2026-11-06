@@ -4,6 +4,7 @@ import { applyFitScale } from './fit-scale'
 import { notify } from './host-notify'
 import { emitKeyboardAvoidanceMetrics } from './keyboard-avoidance-metrics'
 import { emitModesIfChanged } from './mode-mirroring'
+import { extractActivePromptInputBeforeCursor } from './prompt-line-backload'
 import { reflow } from './reflow'
 import { releaseResizeRepaintSurface } from './resize-repaint-hold'
 import { resumeTerminalDataReplyAuthority } from './query-reply'
@@ -179,5 +180,11 @@ export function handleMsg(scope: TerminalDocumentScope, msg: TerminalHostMessage
         repositionOverlay(scope)
       } catch {}
     }
+  } else if (msg.type === 'read-prompt-backload') {
+    const text =
+      scope.term && scope.term.buffer
+        ? extractActivePromptInputBeforeCursor(scope.term.buffer.active)
+        : ''
+    notify(scope, { type: 'prompt-backload', text })
   }
 }

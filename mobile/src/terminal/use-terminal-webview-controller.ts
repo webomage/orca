@@ -193,6 +193,8 @@ export function useTerminalWebViewController(
         confirmWebReady(false)
       } else if (msg.type === 'ready') {
         promises.resolveReady()
+      } else if (msg.type === 'prompt-backload') {
+        promises.resolvePromptBackload(msg.text)
       } else if (msg.type === 'cell-box') {
         cellBoxRef.current = readTerminalCellBox(msg)
         if (msg.refit === true) {

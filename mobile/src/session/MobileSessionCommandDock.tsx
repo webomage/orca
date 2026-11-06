@@ -141,6 +141,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
             }
           }}
           onKeyPress={handleLiveInputKeyPress}
+          onFocus={() => void controller.requestTerminalPromptBackload()}
           onSubmitEditing={submitLiveInput}
           placeholder={t('session.commandDock.tapToShowKeyboard', 'Tap to show keyboard')}
           accessibilityLabel={t('session.commandDock.liveInputLabel', 'Live terminal input')}

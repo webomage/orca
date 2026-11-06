@@ -10,6 +10,7 @@ export const TERMINAL_SYNC_FRAME_HOLD_MS = 160
 
 // Bound UTF-16 units as backup to server ack flow control; an upstream bug must not grow this buffer forever.
 export const TERMINAL_WRITE_MAX_PENDING_UNITS = 512 * 1024
+const DEC_SYNC_HOLD_BAILOUT_MS = 1000
 
 export function createTerminalWriteCoalescer(deliver: (data: string) => void) {
   let pendingChunks: string[] = []
@@ -21,8 +22,12 @@ export function createTerminalWriteCoalescer(deliver: (data: string) => void) {
   let syncHoldDeadline = Number.POSITIVE_INFINITY
   let syncMarkerTail = ''
   let syncFrameOpen = false
+  let syncHoldStartedAt = 0
   // Start expired so construction and clear deliver the first chunk without delay.
   let lastFlushAt = Number.NEGATIVE_INFINITY
+
+  const isHoldingSynchronizedOutput = () =>
+    syncFrameOpen && Date.now() - syncHoldStartedAt < DEC_SYNC_HOLD_BAILOUT_MS
 
   const cancelTimer = () => {
     if (flushTimer !== null) {
@@ -36,6 +41,7 @@ export function createTerminalWriteCoalescer(deliver: (data: string) => void) {
     cancelTimer()
     syncHoldDeadline = Number.POSITIVE_INFINITY
     syncFrameOpen = false
+    syncHoldStartedAt = 0
     if (pendingChunks.length === 0) {
       return
     }
@@ -90,6 +96,11 @@ export function createTerminalWriteCoalescer(deliver: (data: string) => void) {
     const syncScan = scanSynchronizedOutput(data, syncMarkerTail, syncFrameOpen)
     syncMarkerTail = syncScan.markerTail
     syncFrameOpen = syncScan.active
+    if (!wasHoldingSyncFrame && syncFrameOpen) {
+      syncHoldStartedAt = Date.now()
+    } else if (!syncFrameOpen) {
+      syncHoldStartedAt = 0
+    }
 
     const now = Date.now()
     const monoNow = performance.now()
@@ -151,9 +162,8 @@ export function createTerminalWriteCoalescer(deliver: (data: string) => void) {
     syncHoldDeadline = Number.POSITIVE_INFINITY
     syncMarkerTail = ''
     syncFrameOpen = false
+    syncHoldStartedAt = 0
   }
-
-  const isHoldingSynchronizedOutput = () => syncFrameOpen
 
   return { beginResizeBurst, clear, flushNow, isHoldingSynchronizedOutput, markInteractive, write }
 }
