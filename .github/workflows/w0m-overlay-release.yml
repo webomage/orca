@@ -231,8 +231,10 @@ jobs:
 
       - name: Gate runtime file-watcher process isolation
         run: |
-          node config/scripts/runtime-file-watcher-fault-harness.mjs
-          ELECTRON_RUN_AS_NODE=1 pnpm exec electron config/scripts/runtime-file-watcher-fault-harness.mjs
+          HARNESS='config/scripts/diagnostics/runtime-watchers/runtime-file-watcher-fault-harness.mjs'
+          [ -f "$HARNESS" ] || HARNESS='config/scripts/runtime-file-watcher-fault-harness.mjs'
+          node "$HARNESS"
+          ELECTRON_RUN_AS_NODE=1 pnpm exec electron "$HARNESS"
 
       - name: Package Linux x64 AppImage and latest-linux.yml
         env:
@@ -242,14 +244,19 @@ jobs:
           ORCA_PUBLISH_RELEASE_TYPE: release
         run: |
           set -euo pipefail
-          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          ENSURE_RUNTIME='config/scripts/native-build/node-addons/ensure-native-runtime.mjs'
+          [ -f "$ENSURE_RUNTIME" ] || ENSURE_RUNTIME='config/scripts/ensure-native-runtime.mjs'
+          node "$ENSURE_RUNTIME" --runtime=electron
           pnpm exec electron-builder --config config/electron-builder.config.cjs --linux AppImage --x64 --publish never
           test -f dist/orca-linux.AppImage
           test -f dist/latest-linux.yml
           cat dist/latest-linux.yml
 
       - name: Smoke packaged node-pty on Linux glibc floor
-        run: node config/scripts/run-linux-packaged-node-pty-floor-smoke.mjs --app-dir dist/linux-unpacked
+        run: |
+          SMOKE='config/scripts/desktop-distribution/runtime-verification/run-linux-packaged-node-pty-floor-smoke.mjs'
+          [ -f "$SMOKE" ] || SMOKE='config/scripts/run-linux-packaged-node-pty-floor-smoke.mjs'
+          node "$SMOKE" --app-dir dist/linux-unpacked
 
       - name: Publish GitHub Release on webomage/orca
         env:

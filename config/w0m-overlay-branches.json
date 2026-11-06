@@ -66,7 +66,7 @@
     },
     {
       "branch": "fix/terminal-smooth-resize-and-replay",
-      "description": "Hold painted terminal surface across SIGWINCH resize and ?2026 repaint bursts on desktop and mobile"
+      "description": "Suppress duplicate SIGWINCH on same-size reattach, extend dynamic 1200ms streaming resize hold, stop settled grid-drift probes, and float SessionRestoredBanner"
     },
     {
       "branch": "feat/mobile-terminal-4-tap-alt-m",
@@ -86,7 +86,11 @@
     },
     {
       "branch": "fix/mobile-terminal-theme-enforcement",
-      "description": "Enforce mobile light/dark appearance scheme on TerminalWebView palette and frame background"
+      "description": "Enforce light/dark theme across Mobile (native + web), Desktop Native Chat + TerminalPane, and host PTY OSC 10/11 & CSI ?996n color queries"
+    },
+    {
+      "branch": "perf/terminal-chat-redraw-and-tab-caching",
+      "description": "Throttle unattended/synchronized PTY redraws, treat Native Chat cover as hidden for PTY/WebGL, pause backgrounded chat pacing, and bound warm desktop/mobile tab LRU caches"
     }
   ]
 }
