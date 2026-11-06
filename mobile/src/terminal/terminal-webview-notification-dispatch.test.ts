@@ -50,12 +50,20 @@ describe('dispatchTerminalWebViewNotification', () => {
     expect(onTerminalInput.mock.calls).toEqual([[click, { click: true }], [wheel]])
   })
 
-  it('dispatches terminal-triple-tap notifications', () => {
+  it('dispatches terminal-triple-tap and terminal-quad-tap notifications', () => {
     const onTerminalTripleTap = vi.fn()
+    const onTerminalQuadTap = vi.fn()
     dispatchTerminalWebViewNotification(
       { type: 'terminal-triple-tap' },
-      { onTerminalTripleTap, reportEngineError: vi.fn() }
+      { onTerminalTripleTap, onTerminalQuadTap, reportEngineError: vi.fn() }
     )
     expect(onTerminalTripleTap).toHaveBeenCalledTimes(1)
+    expect(onTerminalQuadTap).not.toHaveBeenCalled()
+
+    dispatchTerminalWebViewNotification(
+      { type: 'terminal-quad-tap' },
+      { onTerminalTripleTap, onTerminalQuadTap, reportEngineError: vi.fn() }
+    )
+    expect(onTerminalQuadTap).toHaveBeenCalledTimes(1)
   })
 })

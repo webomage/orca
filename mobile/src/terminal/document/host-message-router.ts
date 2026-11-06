@@ -7,6 +7,7 @@ import { emitModesIfChanged } from './mode-mirroring'
 import { reflow } from './reflow'
 import { releaseResizeRepaintSurface } from './resize-repaint-hold'
 import { resumeTerminalDataReplyAuthority } from './query-reply'
+import { cancelPendingTripleTap } from './surface-tap'
 import { repositionOverlay } from './selection-overlay'
 import { cancelSelect } from './selection-mode'
 import { resetEvictionCounter } from './selection-state-and-eviction'
@@ -98,6 +99,7 @@ export function handleMsg(scope: TerminalDocumentScope, msg: TerminalHostMessage
     }
   } else if (msg.type === 'clear') {
     releaseResizeRepaintSurface(scope, false)
+    cancelPendingTripleTap(scope)
     scope.pendingReplayScrollAnchorRows = null
     scope.tapStreak = null
     scope.terminalGeneration++
@@ -131,6 +133,7 @@ export function handleMsg(scope: TerminalDocumentScope, msg: TerminalHostMessage
     if (typeof msg.active === 'boolean') {
       scope.interactionActive = msg.active
       if (!msg.active) {
+        cancelPendingTripleTap(scope)
         scope.tapStreak = null
         suspendSurfaceTouchGestures(scope)
       }
@@ -139,6 +142,16 @@ export function handleMsg(scope: TerminalDocumentScope, msg: TerminalHostMessage
     if (typeof msg.enabled === 'boolean') {
       scope.tripleTapEnterEnabled = msg.enabled
       if (!msg.enabled) {
+        cancelPendingTripleTap(scope)
+        if (!scope.quadTapAltMEnabled) {
+          scope.tapStreak = null
+        }
+      }
+    }
+  } else if (msg.type === 'set-quad-tap-alt-m') {
+    if (typeof msg.enabled === 'boolean') {
+      scope.quadTapAltMEnabled = msg.enabled
+      if (!msg.enabled && !scope.tripleTapEnterEnabled) {
         scope.tapStreak = null
       }
     }

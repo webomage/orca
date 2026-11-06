@@ -10,12 +10,17 @@ export type TerminalAccessoryLayout = {
   visibleBuiltInIds: string[]
   directionPadEnabled?: boolean
   tripleTapEnterEnabled?: boolean
+  quadTapAltMEnabled?: boolean
 }
 
 function optionalGestureFields(candidate: {
   tripleTapEnterEnabled?: unknown
-}): Pick<TerminalAccessoryLayout, 'tripleTapEnterEnabled'> {
-  return candidate.tripleTapEnterEnabled === false ? { tripleTapEnterEnabled: false } : {}
+  quadTapAltMEnabled?: unknown
+}): Pick<TerminalAccessoryLayout, 'tripleTapEnterEnabled' | 'quadTapAltMEnabled'> {
+  return {
+    ...(candidate.tripleTapEnterEnabled === false ? { tripleTapEnterEnabled: false } : {}),
+    ...(candidate.quadTapAltMEnabled === false ? { quadTapAltMEnabled: false } : {})
+  }
 }
 
 export type TerminalAccessoryLayoutPreference = TerminalAccessoryLayout & {
@@ -119,7 +124,8 @@ export function normalizeTerminalAccessoryLayoutPreference(
     knownBuiltInIds: 'knownBuiltInIds' in value ? value.knownBuiltInIds : undefined,
     directionPadEnabled: 'directionPadEnabled' in value ? value.directionPadEnabled : undefined,
     tripleTapEnterEnabled:
-      'tripleTapEnterEnabled' in value ? value.tripleTapEnterEnabled : undefined
+      'tripleTapEnterEnabled' in value ? value.tripleTapEnterEnabled : undefined,
+    quadTapAltMEnabled: 'quadTapAltMEnabled' in value ? value.quadTapAltMEnabled : undefined
   }
   const builtInSet = new Set(currentBuiltInIds)
   const gestureFields = optionalGestureFields(candidate)

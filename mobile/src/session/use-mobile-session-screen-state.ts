@@ -91,6 +91,7 @@ export function useMobileSessionScreenState(scope: MobileSessionFoundationModel)
   const [customKeys, setCustomKeys] = useState<CustomKey[]>([])
   const [directionPadEnabled, setDirectionPadEnabled] = useState(true)
   const [tripleTapEnterEnabled, setTripleTapEnterEnabled] = useState(true)
+  const [quadTapAltMEnabled, setQuadTapAltMEnabled] = useState(true)
   const [visibleBuiltInIds, setVisibleBuiltInIds] = useState<string[]>(
     getDefaultTerminalAccessoryBuiltInIds
   )
@@ -201,6 +202,8 @@ export function useMobileSessionScreenState(scope: MobileSessionFoundationModel)
     setDirectionPadEnabled,
     tripleTapEnterEnabled,
     setTripleTapEnterEnabled,
+    quadTapAltMEnabled,
+    setQuadTapAltMEnabled,
     visibleBuiltInIds,
     setVisibleBuiltInIds,
     showCustomKeyModal,

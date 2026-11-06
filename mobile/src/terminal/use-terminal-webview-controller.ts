@@ -28,6 +28,7 @@ export function useTerminalWebViewController(
     terminalTheme,
     interactionActive = true,
     tripleTapEnterEnabled = true,
+    quadTapAltMEnabled = true,
     textScale = 1,
     onWebReady,
     onEngineError,
@@ -43,6 +44,7 @@ export function useTerminalWebViewController(
     onTerminalInteraction,
     onTerminalTap,
     onTerminalTripleTap,
+    onTerminalQuadTap,
     onFileTap,
     onOpenUrl,
     onTextScaleChange,
@@ -51,6 +53,7 @@ export function useTerminalWebViewController(
   const { pingsOnForegroundRecovery, post } = transport
   const isWebReadyRef = useRef(false)
   const sentTripleTapEnterRef = useRef<boolean>(true)
+  const sentQuadTapAltMRef = useRef<boolean>(true)
   const pendingMessages = useMemo(() => createTerminalWebViewPendingMessages(), [])
   const messageIdRef = useRef(0)
   const pendingPingIdRef = useRef<number | null>(null)
@@ -125,12 +128,19 @@ export function useTerminalWebViewController(
       } else {
         sentTripleTapEnterRef.current = true
       }
+      if (!quadTapAltMEnabled) {
+        sendToDocument({ type: 'set-quad-tap-alt-m', enabled: false })
+        sentQuadTapAltMRef.current = false
+      } else {
+        sentQuadTapAltMRef.current = true
+      }
       sendToDocument({ type: 'set-theme', terminalTheme })
       flushPendingMessages()
     },
     [
       interactionActive,
       tripleTapEnterEnabled,
+      quadTapAltMEnabled,
       clearEngineError,
       clearWebReadyWatchdog,
       flushPendingMessages,
@@ -152,6 +162,13 @@ export function useTerminalWebViewController(
       sendToDocument({ type: 'set-triple-tap-enter', enabled: tripleTapEnterEnabled })
     }
   }, [sendToDocument, tripleTapEnterEnabled])
+
+  useEffect(() => {
+    if (isWebReadyRef.current && sentQuadTapAltMRef.current !== quadTapAltMEnabled) {
+      sentQuadTapAltMRef.current = quadTapAltMEnabled
+      sendToDocument({ type: 'set-quad-tap-alt-m', enabled: quadTapAltMEnabled })
+    }
+  }, [sendToDocument, quadTapAltMEnabled])
 
   const receive = useCallback(
     (msg: Record<string, unknown>) => {
@@ -195,6 +212,7 @@ export function useTerminalWebViewController(
           onTerminalInteraction: interactionActive ? onTerminalInteraction : undefined,
           onTerminalTap: interactionActive ? onTerminalTap : undefined,
           onTerminalTripleTap: interactionActive ? onTerminalTripleTap : undefined,
+          onTerminalQuadTap: interactionActive ? onTerminalQuadTap : undefined,
           onFileTap: interactionActive ? onFileTap : undefined,
           onOpenUrl: interactionActive ? onOpenUrl : undefined,
           onTextScaleChange
@@ -218,6 +236,7 @@ export function useTerminalWebViewController(
       onTerminalInteraction,
       onTerminalTap,
       onTerminalTripleTap,
+      onTerminalQuadTap,
       onFileTap,
       onOpenUrl,
       onTextScaleChange,

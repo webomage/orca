@@ -373,40 +373,60 @@ describe('terminal WebView tap routing', () => {
     expect(posted.slice(beforeStoppingTouch).find((m) => m.type === 'terminal-tap')).toBeUndefined()
   })
 
-  it('posts terminal-triple-tap and selection haptic on three fast taps without a third click', async () => {
+  it('disambiguates 3-tap Enter (after settle) vs 4-tap Alt+M (cancelling pending 3-tap)', async () => {
     let now = 2_000
     vi.spyOn(Date, 'now').mockImplementation(() => now)
     const { posted } = boot('interactive prompt', undefined, 'drag')
     await settle()
-    window.dispatchEvent(
-      new MessageEvent('message', {
-        data: JSON.stringify({ type: 'write', data: '\u001b[?1006l' })
-      })
-    )
+    vi.useFakeTimers()
+    try {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: JSON.stringify({ type: 'write', data: '\u001b[?1006l' })
+        })
+      )
 
-    fireTouch('touchstart', [{ x: 20, y: tapY }])
-    fireTouch('touchend', [])
-    now += 150
-    fireTouch('touchstart', [{ x: 26, y: tapY + 4 }])
-    fireTouch('touchend', [])
-    now += 150
-    fireTouch('touchstart', [{ x: 22, y: tapY + 2 }])
-    fireTouch('touchend', [])
+      // 3 fast taps -> waits 280ms settle window, then posts terminal-triple-tap
+      fireTouch('touchstart', [{ x: 20, y: tapY }])
+      fireTouch('touchend', [])
+      now += 150
+      fireTouch('touchstart', [{ x: 26, y: tapY + 4 }])
+      fireTouch('touchend', [])
+      now += 150
+      fireTouch('touchstart', [{ x: 22, y: tapY + 2 }])
+      fireTouch('touchend', [])
 
-    expect(posted.filter((m) => m.type === 'terminal-input' && m.click === true)).toHaveLength(2)
-    expect(posted.filter((m) => m.type === 'terminal-tap')).toHaveLength(2)
-    expect(posted.filter((m) => m.type === 'terminal-triple-tap')).toHaveLength(1)
-    expect(posted).toContainEqual({ type: 'haptic', kind: 'selection' })
+      expect(posted.filter((m) => m.type === 'terminal-triple-tap')).toHaveLength(0)
+      vi.advanceTimersByTime(280)
+      expect(posted.filter((m) => m.type === 'terminal-triple-tap')).toHaveLength(1)
+      expect(posted.filter((m) => m.type === 'terminal-quad-tap')).toHaveLength(0)
+      expect(posted).toContainEqual({ type: 'haptic', kind: 'selection' })
 
-    // A fourth tap starts a fresh streak rather than firing another triple-tap.
-    now += 120
-    fireTouch('touchstart', [{ x: 22, y: tapY + 2 }])
-    fireTouch('touchend', [])
-    expect(posted.filter((m) => m.type === 'terminal-triple-tap')).toHaveLength(1)
-    expect(posted.filter((m) => m.type === 'terminal-tap')).toHaveLength(3)
+      // 4 fast taps -> cancels pending 3-tap and posts ONLY terminal-quad-tap immediately
+      posted.length = 0
+      now += 1_000
+      fireTouch('touchstart', [{ x: 20, y: tapY }])
+      fireTouch('touchend', [])
+      now += 140
+      fireTouch('touchstart', [{ x: 24, y: tapY + 2 }])
+      fireTouch('touchend', [])
+      now += 140
+      fireTouch('touchstart', [{ x: 22, y: tapY + 1 }])
+      fireTouch('touchend', [])
+      now += 140
+      fireTouch('touchstart', [{ x: 23, y: tapY + 2 }])
+      fireTouch('touchend', [])
+
+      expect(posted.filter((m) => m.type === 'terminal-quad-tap')).toHaveLength(1)
+      expect(posted.filter((m) => m.type === 'terminal-triple-tap')).toHaveLength(0)
+      vi.advanceTimersByTime(400)
+      expect(posted.filter((m) => m.type === 'terminal-triple-tap')).toHaveLength(0)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
-  it('does not post terminal-triple-tap when taps are too slow, too far apart, or disabled', async () => {
+  it('does not post triple-tap or quad-tap when taps are too slow, too far apart, or disabled', async () => {
     let now = 5_000
     vi.spyOn(Date, 'now').mockImplementation(() => now)
     const { posted } = boot('plain prompt')
@@ -422,6 +442,7 @@ describe('terminal WebView tap routing', () => {
     fireTouch('touchstart', [{ x: 20, y: tapY }])
     fireTouch('touchend', [])
     expect(posted.find((m) => m.type === 'terminal-triple-tap')).toBeUndefined()
+    expect(posted.find((m) => m.type === 'terminal-quad-tap')).toBeUndefined()
 
     // Too far apart (> 45px)
     now += 1_000
@@ -434,19 +455,26 @@ describe('terminal WebView tap routing', () => {
     fireTouch('touchstart', [{ x: 80, y: tapY }])
     fireTouch('touchend', [])
     expect(posted.find((m) => m.type === 'terminal-triple-tap')).toBeUndefined()
+    expect(posted.find((m) => m.type === 'terminal-quad-tap')).toBeUndefined()
 
-    // Disabled via set-triple-tap-enter
+    // Disabling both suppresses both
     window.dispatchEvent(
       new MessageEvent('message', {
         data: JSON.stringify({ type: 'set-triple-tap-enter', enabled: false })
       })
     )
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: JSON.stringify({ type: 'set-quad-tap-alt-m', enabled: false })
+      })
+    )
     now += 1_000
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < 4; i += 1) {
       fireTouch('touchstart', [{ x: 20, y: tapY }])
       fireTouch('touchend', [])
       now += 100
     }
     expect(posted.find((m) => m.type === 'terminal-triple-tap')).toBeUndefined()
+    expect(posted.find((m) => m.type === 'terminal-quad-tap')).toBeUndefined()
   })
 })

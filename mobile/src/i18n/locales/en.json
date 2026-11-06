@@ -1278,7 +1278,9 @@
       "showShortcut": "Show {{label}} shortcut",
       "gestures": "GESTURES",
       "tripleTapEnter": "Triple-tap for Enter",
-      "tripleTapEnterDescription": "Tap the terminal three times to send Enter, confirming prompts or inline input without opening the keyboard."
+      "tripleTapEnterDescription": "Tap the terminal three times to send Enter, confirming prompts or inline input without opening the keyboard.",
+      "quadTapAltM": "4-tap for Alt+M",
+      "quadTapAltMDescription": "Tap the terminal four times to send Alt+M (mode switch in CLI agents) without opening the keyboard."
     },
     "voiceModelList": {
       "modelSize": "{{size}} MB",
