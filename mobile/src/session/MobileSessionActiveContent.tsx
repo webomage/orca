@@ -24,15 +24,23 @@ import { FileReader } from './MobileSessionFileReader'
 import { MobileSessionContentState } from './MobileSessionContentState'
 import { MarkdownReader } from './MobileSessionMarkdownReader'
 import { loadMarkdownPreviewImage } from '../files/mobile-markdown-image-source'
+import { PaneEdgeNavigationOverlay } from '../navigation/edge-arrows/edge-navigation-context'
+import { useSessionEdgeNavigation } from './use-session-edge-navigation'
 
 export function MobileSessionActiveContent({
-  controller
+  controller,
+  obscured = false
 }: {
   controller: MobileSessionController
+  obscured?: boolean
 }) {
   useMobileColorScheme()
   const t = useMobileTranslation()
   const executionHost = useWorkspaceExecutionHost()
+  const { terminalTarget, contentTarget, navigateSessionTabs } = useSessionEdgeNavigation({
+    controller,
+    obscured
+  })
   const [paneFrame, setPaneFrame] = useState({ width: 0, height: 0 })
   const paneDirection = terminalPaneDirection(paneFrame, controller.terminalSplitLayout)
   const {
@@ -50,13 +58,6 @@ export function MobileSessionActiveContent({
     terminalSplitActive,
     visibleTerminalHandles,
     notifyTerminalPaneFrame,
-    markdownDocs,
-    fileDocs,
-    diffComments,
-    diffCommentBusy,
-    createError,
-    setCreateError,
-    setShowCreateTabDrawer,
     dictationMode,
     dictationEnabled,
     toastMessage,
@@ -70,17 +71,6 @@ export function MobileSessionActiveContent({
     handleDictationToggle,
     handleDictationPressIn,
     handleDictationPressOut,
-    readMarkdownTab,
-    addDiffCommentForFile,
-    deleteDiffCommentForFile,
-    copyDiffCommentsToClipboard,
-    sendDiffCommentsToAgent,
-    sendingDiffCommentIds,
-    updateMarkdownLocalContent,
-    copyMarkdownLocalContent,
-    copyMarkdownPath,
-    discardMarkdownLocalContent,
-    saveMarkdownTab,
     notifyTerminalFrame,
     handleNativeChatFileTap,
     nativeChatImages,
@@ -89,14 +79,11 @@ export function MobileSessionActiveContent({
     activeFileTab,
     activeBrowserTab,
     activePendingTerminalTab,
-    isPendingTerminalRecoveryParked,
-    retryPendingTerminalRecovery,
     showLoadingState,
     showEmptyState,
     keyboardLift,
     activeTerminalKeyboardLift,
     toastAnimatedStyle,
-    createTabBusy,
     handleCreateBrowserRef,
     isFloatingWorkspaceRoute
   } = controller
@@ -142,31 +129,34 @@ export function MobileSessionActiveContent({
         connState={presentedConnState}
         hostName={hostTitle}
         loading={showLoadingState}
-        creating={createTabBusy}
-        createError={createError}
+        creating={controller.createTabBusy}
+        createError={controller.createError}
         onReconnect={forceReconnectHost ? () => void forceReconnectHost(hostId) : null}
-        onRetryTabs={() => void retryPendingTerminalRecovery()}
+        onRetryTabs={() => void controller.retryPendingTerminalRecovery()}
         onCreateTab={() => {
-          setCreateError('')
-          setShowCreateTabDrawer(true)
+          controller.setCreateError('')
+          controller.setShowCreateTabDrawer(true)
         }}
       />
     ) : activeMarkdownTab ? (
       <View style={styles.markdownFrame}>
         <MarkdownReader
           documentId={activeMarkdownTab.id}
-          doc={markdownDocs.get(activeMarkdownTab.id)}
-          onRefresh={() => void readMarkdownTab(activeMarkdownTab)}
-          onChange={(content) => updateMarkdownLocalContent(activeMarkdownTab.id, content)}
-          onSave={() => void saveMarkdownTab(activeMarkdownTab)}
-          onCopy={() => void copyMarkdownLocalContent(activeMarkdownTab.id)}
-          onCopyPath={() => void copyMarkdownPath(activeMarkdownTab)}
-          onDiscard={() => discardMarkdownLocalContent(activeMarkdownTab)}
+          doc={controller.markdownDocs.get(activeMarkdownTab.id)}
+          onRefresh={() => void controller.readMarkdownTab(activeMarkdownTab)}
+          onChange={(content) =>
+            controller.updateMarkdownLocalContent(activeMarkdownTab.id, content)
+          }
+          onSave={() => void controller.saveMarkdownTab(activeMarkdownTab)}
+          onCopy={() => void controller.copyMarkdownLocalContent(activeMarkdownTab.id)}
+          onCopyPath={() => void controller.copyMarkdownPath(activeMarkdownTab)}
+          onDiscard={() => controller.discardMarkdownLocalContent(activeMarkdownTab)}
           loadImageSource={(path) =>
             loadMarkdownPreviewImage(client, worktreeId, activeMarkdownTab.relativePath, path)
           }
           keyboardLift={keyboardLift}
         />
+        <PaneEdgeNavigationOverlay target={contentTarget} bottomInset={keyboardLift} />
         {toastMessage && (
           <Animated.View pointerEvents="none" style={[styles.toast, toastAnimatedStyle]}>
             <Text style={styles.toastText}>{toastMessage}</Text>
@@ -178,24 +168,25 @@ export function MobileSessionActiveContent({
         <FileReader
           documentId={JSON.stringify([hostId, executionHost, worktreeId, activeFileTab.id])}
           client={client}
-          doc={fileDocs.get(activeFileTab.id)}
+          doc={controller.fileDocs.get(activeFileTab.id)}
           title={activeFileTab.title || t('session.activeContent.fileTitle', 'File')}
           relativePath={activeFileTab.relativePath}
           language={activeFileTab.language}
           diffCommentActions={
             activeFileTab.diffSource === 'staged' || activeFileTab.diffSource === 'unstaged'
               ? {
-                  comments: diffComments,
-                  sendingCommentIds: sendingDiffCommentIds,
-                  busy: diffCommentBusy,
-                  onAdd: addDiffCommentForFile,
-                  onDelete: deleteDiffCommentForFile,
-                  onCopyAll: copyDiffCommentsToClipboard,
-                  onSendAll: sendDiffCommentsToAgent
+                  comments: controller.diffComments,
+                  sendingCommentIds: controller.sendingDiffCommentIds,
+                  busy: controller.diffCommentBusy,
+                  onAdd: controller.addDiffCommentForFile,
+                  onDelete: controller.deleteDiffCommentForFile,
+                  onCopyAll: controller.copyDiffCommentsToClipboard,
+                  onSendAll: controller.sendDiffCommentsToAgent
                 }
               : undefined
           }
         />
+        <PaneEdgeNavigationOverlay target={contentTarget} bottomInset={keyboardLift} />
         {toastMessage && (
           <Animated.View pointerEvents="none" style={[styles.toast, toastAnimatedStyle]}>
             <Text style={styles.toastText}>{toastMessage}</Text>
@@ -215,6 +206,7 @@ export function MobileSessionActiveContent({
           bottomInset={insets.bottom}
           onToast={showToast}
         />
+        <PaneEdgeNavigationOverlay target={contentTarget} bottomInset={keyboardLift} />
         {toastMessage && (
           <Animated.View pointerEvents="none" style={[styles.toast, toastAnimatedStyle]}>
             <Text style={styles.toastText}>{toastMessage}</Text>
@@ -223,11 +215,11 @@ export function MobileSessionActiveContent({
       </View>
     ) : activePendingTerminalTab ? (
       <View style={styles.emptyState}>
-        {!isPendingTerminalRecoveryParked && (
+        {!controller.isPendingTerminalRecoveryParked && (
           <ActivityIndicator size="small" color={colors.textSecondary} />
         )}
         <Text style={styles.emptyText}>
-          {isPendingTerminalRecoveryParked
+          {controller.isPendingTerminalRecoveryParked
             ? t(
                 'session.activeContent.terminalTakingLonger',
                 'Terminal is taking longer than expected'
@@ -235,7 +227,7 @@ export function MobileSessionActiveContent({
             : activePendingTerminalTab.title ||
               t('session.activeContent.loadingTerminal', 'Loading terminal')}
         </Text>
-        {isPendingTerminalRecoveryParked && (
+        {controller.isPendingTerminalRecoveryParked && (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t(
@@ -246,7 +238,7 @@ export function MobileSessionActiveContent({
               styles.createButton,
               pressed && styles.newTerminalButtonPressed
             ]}
-            onPress={() => void retryPendingTerminalRecovery()}
+            onPress={() => void controller.retryPendingTerminalRecovery()}
           >
             <Text style={styles.createButtonText}>{t('common.retry', 'Retry')}</Text>
           </Pressable>
@@ -353,6 +345,9 @@ export function MobileSessionActiveContent({
                 sessionId={resolveMobileNativeChatSessionId(controller.activeSessionTab)}
                 getSendCompletionGeneration={controller.getSendCompletionGeneration}
                 keyboardInset={keyboardLift}
+                obscured={obscured}
+                canNavigateRight={controller.visibleTabs.length > 1}
+                onNavigateHorizontal={navigateSessionTabs}
                 // A workspace routed to another server stops with that server, whose name the phone lacks.
                 hostName={executionHost === undefined && hostProfile ? hostTitle : null}
                 onOpenUrlInOrca={openUrlInOrca}
@@ -368,6 +363,9 @@ export function MobileSessionActiveContent({
             </MobileAgentMessageProvider>
           </MobileDictationMeterContext.Provider>
         </MobileNativeChatDictationPreviewContext.Provider>
+        {!controller.showNativeChat && activeHandle ? (
+          <PaneEdgeNavigationOverlay target={terminalTarget} bottomInset={keyboardLift} />
+        ) : null}
         {toastMessage && (
           <Animated.View pointerEvents="none" style={[styles.toast, toastAnimatedStyle]}>
             <Text style={styles.toastText}>{toastMessage}</Text>
