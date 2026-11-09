@@ -18,6 +18,7 @@ import { useTerminalTextFieldSubmitBinding } from '../use-terminal-text-field-su
 import { useAgentSendKeyboardDismissal } from './use-agent-send-keyboard-dismissal'
 import type { MobileSessionTab } from '../../session/tabs/mobile-session-tabs'
 import { useMobileSessionTabActionSheetOpener } from '../../session/tabs/use-mobile-session-tab-action-targets'
+import { useMobileSessionTerminalTripleTap } from './use-mobile-session-terminal-triple-tap'
 import type { MobileSessionTerminalWebviewModel } from './use-mobile-session-terminal-webview'
 import type { TerminalLiveInputSender } from '../terminal-live-input-sender'
 
@@ -238,8 +239,14 @@ export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminal
     [clearSessionTabActionSheetKeyboardListener, openSessionTabActionSheet, scheduleDelayedAction]
   )
 
+  const handleTerminalTripleTap = useMobileSessionTerminalTripleTap(scope, {
+    dismissKeyboardAfterAgentSend,
+    handleAccessoryKey
+  })
+
   return {
     handleAccessoryKey,
+    handleTerminalTripleTap,
     sendLiveTerminalInput,
     clearSessionTabActionSheetKeyboardListener,
     openSessionTabActionSheet,

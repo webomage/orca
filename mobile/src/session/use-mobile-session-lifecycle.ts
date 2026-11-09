@@ -25,6 +25,7 @@ export function useMobileSessionLifecycle(scope: MobileSessionTabReconciliationM
     setCustomKeys,
     setVisibleBuiltInIds,
     setDirectionPadEnabled,
+    setTripleTapEnterEnabled,
     setHostEndpoint,
     setHostName,
     connStateRef,
@@ -101,6 +102,7 @@ export function useMobileSessionLifecycle(scope: MobileSessionTabReconciliationM
         if (layout) {
           setVisibleBuiltInIds(layout.visibleBuiltInIds)
           setDirectionPadEnabled(layout.directionPadEnabled !== false)
+          setTripleTapEnterEnabled(layout.tripleTapEnterEnabled !== false)
         }
         setAccessoryLayoutLoaded(true)
       }
