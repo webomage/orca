@@ -16,6 +16,8 @@ import { reopensFocusedInputWhenKeyboardHidden } from '../terminal-live-input-ke
 import type { TerminalLiveInputSender } from '../terminal-live-input-sender'
 import type { TerminalLiveInputFailure } from '../terminal-live-pending-flush-state'
 import { useTerminalLiveInputCommit } from '../use-terminal-live-input-commit'
+import { useTerminalPasswordPromptState } from '../use-terminal-password-prompt-state'
+import { registerTerminalPasswordPromptObserver } from './terminal-stream-cwd'
 import { resolveMobileTerminalInputGate } from '../terminal-input-connection-gate'
 import { createInitialSessionAutoCreateState } from './use-initial-session-terminal-autocreate'
 import { TerminalViewportResubscribeBudget } from './mobile-terminal-viewport-resubscribe'
@@ -114,6 +116,15 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
   const framesLivePaste = useCallback(
     (handle: string): boolean => ptyModesRef.current.get(handle)?.bracketedPasteMode === true,
     []
+  )
+  const {
+    terminalPasswordPromptHandles,
+    observeTerminalOutputForPasswordPrompt,
+    clearTerminalPasswordPrompt
+  } = useTerminalPasswordPromptState()
+  registerTerminalPasswordPromptObserver(
+    terminalCwdRef.current,
+    observeTerminalOutputForPasswordPrompt
   )
   const {
     clearPendingLiveInputCommit,
@@ -226,7 +237,10 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
     terminalInventoryRecoveryScope,
     registerTerminalInventoryRecoveryAction,
     signalTerminalInventoryRecovery,
-    getLiveInteractionGeneration: getLiveInputInteractionGeneration
+    getLiveInteractionGeneration: getLiveInputInteractionGeneration,
+    terminalPasswordPromptHandles,
+    observeTerminalOutputForPasswordPrompt,
+    clearTerminalPasswordPrompt
   }
 }
 
