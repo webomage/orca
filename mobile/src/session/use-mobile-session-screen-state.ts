@@ -20,7 +20,7 @@ import type {
   MarkdownDocState
 } from '../files/session-documents/session-document-state'
 import type { MobileDisplayMode, Terminal } from '../terminal/session/mobile-terminal-model'
-import type { MobileSessionTab } from './tabs/mobile-session-tabs'
+import type { MobileSessionTab, MobileSessionTabGroup } from './tabs/mobile-session-tabs'
 import { useMobileSessionTabActionTargets } from './tabs/use-mobile-session-tab-action-targets'
 import type { MobileSessionFoundationModel } from './use-mobile-session-foundation'
 
@@ -31,6 +31,8 @@ export function useMobileSessionScreenState(scope: MobileSessionFoundationModel)
   const terminalsRef = useRef<Terminal[]>([])
   const [sessionTabs, setSessionTabs] = useState<MobileSessionTab[]>([])
   const sessionTabsRef = useRef<MobileSessionTab[]>([])
+  const sessionTabGroupsRef = useRef<MobileSessionTabGroup[]>([])
+  const activeSessionGroupIdRef = useRef<string | null>(null)
   const appliedSnapshotMarkerRef = useRef<AppliedSnapshotMarker>({ epoch: null, version: -1 })
   const appliedSessionTabsRevisionRef = useRef(0)
   const closedTabTombstonesRef = useRef<Map<string, number>>(new Map())
@@ -113,6 +115,8 @@ export function useMobileSessionScreenState(scope: MobileSessionFoundationModel)
     sessionTabs,
     setSessionTabs,
     sessionTabsRef,
+    sessionTabGroupsRef,
+    activeSessionGroupIdRef,
     appliedSnapshotMarkerRef,
     appliedSessionTabsRevisionRef,
     closedTabTombstonesRef,

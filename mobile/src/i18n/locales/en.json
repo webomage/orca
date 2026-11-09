@@ -2839,6 +2839,10 @@
     },
     "usePrTextAction": {
       "updateFailed": "Failed to update pull request."
+    },
+    "tabReorder": {
+      "moveLeft": "Move Tab Left",
+      "moveRight": "Move Tab Right"
     }
   },
   "chat": {

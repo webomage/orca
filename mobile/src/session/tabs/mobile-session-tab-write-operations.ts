@@ -38,3 +38,13 @@ export const sessionTabActivate = bindDeferredRpcOperation(
     read: rpcResultVariant('session-tab-activated', sessionWriteUnreadReplySchema)
   })
 )
+
+export const sessionTabMove = bindDeferredRpcOperation(
+  defineRpcOperation({
+    name: 'session.tabs-move',
+    method: 'session.tabs.move',
+    acceptance: 'success-result-or-skip',
+    barrier: 'after-caller-barrier',
+    read: rpcResultVariant('session-tab-moved', sessionWriteUnreadReplySchema)
+  })
+)

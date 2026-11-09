@@ -7,7 +7,10 @@ import type {
   RuntimeMobileSessionTerminalClientTab,
   RuntimeMobileSessionTerminalTab
 } from '../../../../src/shared/runtime-mobile-session-tab-contracts'
-import type { RuntimeMobileSessionTabsResult } from '../../../../src/shared/runtime-session-contracts'
+import type {
+  RuntimeMobileSessionTabGroup,
+  RuntimeMobileSessionTabsResult
+} from '../../../../src/shared/runtime-session-contracts'
 import type { MirroredEvidenceReceipt } from '../../../../src/shared/agent-status/contracts/agent-status-observation'
 import type { MobileNativeChatIdentity } from '../native-chat/mobile-native-chat-eligibility'
 
@@ -87,6 +90,11 @@ export type MobileSessionTab =
     })
   | MobileBrowserTab
 
+export type MobileSessionTabGroup = Pick<
+  RuntimeMobileSessionTabGroup,
+  'id' | 'activeTabId' | 'tabOrder'
+>
+
 export type SessionTabsResult = Pick<
   RuntimeMobileSessionTabsResult,
   | 'worktree'
@@ -97,6 +105,7 @@ export type SessionTabsResult = Pick<
   | 'activeTabType'
   | 'navigationIntent'
 > &
-  Partial<Pick<RuntimeMobileSessionTabsResult, 'publicationEpoch'>> & {
+  Partial<Pick<RuntimeMobileSessionTabsResult, 'publicationEpoch' | 'activeGroupId'>> & {
+    tabGroups?: MobileSessionTabGroup[]
     tabs: MobileSessionTab[]
   }
