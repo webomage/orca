@@ -4,6 +4,7 @@ import type { PersistedState } from '../../../shared/persisted-state-types'
 import {
   getDefaultUIState,
   normalizeAgentActivityDisplayMode,
+  normalizeSubagentDisplayMode,
   normalizeWorktreeCardProperties
 } from '../../../shared/constants'
 import {
@@ -53,6 +54,8 @@ export function getPersistedUI(
     worktreeCardProperties: normalizeWorktreeCardProperties(state.ui?.worktreeCardProperties),
     showAgentModels: state.ui?.showAgentModels !== false,
     agentActivityDisplayMode: normalizeAgentActivityDisplayMode(state.ui?.agentActivityDisplayMode),
+    showSubagents: state.ui?.showSubagents !== false,
+    subagentDisplayMode: normalizeSubagentDisplayMode(state.ui?.subagentDisplayMode),
     workspaceStatuses: normalizeWorkspaceStatuses(state.ui?.workspaceStatuses),
     workspaceBoardOpacity: clampWorkspaceBoardOpacity(state.ui?.workspaceBoardOpacity),
     workspaceBoardColumnWidth: clampWorkspaceBoardColumnWidth(state.ui?.workspaceBoardColumnWidth),

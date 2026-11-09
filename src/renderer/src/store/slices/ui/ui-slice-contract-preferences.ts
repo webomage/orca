@@ -9,6 +9,7 @@ import type {
   ManualRepoOrderEntry,
   ProjectOrderBy,
   StatusBarItem,
+  SubagentDisplayMode,
   WorktreeCardMode,
   WorktreeCardProperty,
   WorkspaceHostOrder,
@@ -102,6 +103,10 @@ export type UISlicePreferences = {
   setShowAgentModels: (show: boolean) => void
   agentActivityDisplayMode: AgentActivityDisplayMode
   setAgentActivityDisplayMode: (mode: AgentActivityDisplayMode) => void
+  showSubagents: boolean
+  setShowSubagents: (show: boolean) => void
+  subagentDisplayMode: SubagentDisplayMode
+  setSubagentDisplayMode: (mode: SubagentDisplayMode) => void
   workspaceStatuses: WorkspaceStatusDefinition[]
   setWorkspaceStatuses: (statuses: WorkspaceStatusDefinition[]) => void
   /** Each paired runtime host's own columns, keyed by environment id; never persisted locally. */

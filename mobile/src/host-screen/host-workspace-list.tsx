@@ -8,7 +8,8 @@ import {
   Text,
   View
 } from 'react-native'
-import { ChevronRight, FolderTree, Pin } from 'lucide-react-native'
+import { ChevronRight, FolderTree, Pin, Terminal } from 'lucide-react-native'
+import { DEFAULT_SUBAGENT_DISPLAY_MODE } from '../../../src/shared/constants'
 import { AuthFailedBanner } from '../components/AuthFailedBanner'
 import { Presence } from '../components/AutoHeight'
 import { DisclosureChevron } from '../components/DisclosureChevron'
@@ -117,6 +118,8 @@ export function HostWorkspaceList({
   )
   const { collapsedGroups } = controller
   const { groupBy, agentActivityDisplayMode } = state.view
+  const showSubagents = state.view.showSubagents !== false
+  const subagentDisplayMode = state.view.subagentDisplayMode ?? DEFAULT_SUBAGENT_DISPLAY_MODE
   const { toggleCollapsed, toggleWorktreeLineage } = settings
   const { setActionTarget } = state
   const { openWorktreeSession } = actions
@@ -157,10 +160,16 @@ export function HostWorkspaceList({
         hideRepo={groupBy === 'repo' && !view.showProjectName}
         cardDetails={cardDetails}
         agentActivityDisplayMode={agentActivityDisplayMode}
+        showSubagents={showSubagents}
+        subagentDisplayMode={subagentDisplayMode}
         onPress={openWorktreeSession}
         onAgentPress={openWorktreeSession}
         statusLive={statusLive && !view.hostContextHealthLabel}
-        onLongPress={item.workspaceKind === 'folder-workspace' ? undefined : setActionTarget}
+        onLongPress={
+          item.workspaceKind === 'folder-workspace' || item.workspaceKind === 'floating'
+            ? undefined
+            : setActionTarget
+        }
         onToggleLineage={toggleWorktreeLineage}
         unsavedName={unsavedRename(renameDrafts, hostId, item)}
       />
@@ -173,6 +182,8 @@ export function HostWorkspaceList({
       repoLookById,
       groupBy,
       agentActivityDisplayMode,
+      showSubagents,
+      subagentDisplayMode,
       openWorktreeSession,
       statusLive,
       setActionTarget,
@@ -370,10 +381,11 @@ const HostSectionHeader = memo(function HostSectionHeader(props: {
             <ChevronRight size={12} color={colors.textMuted} />
           </DisclosureChevron>
         </View>
-        {props.icon === 'pin' && (
+        {props.icon === 'pin' ? (
           <Pin size={12} color={colors.textMuted} style={styles.sectionIcon} />
-        )}
-        {props.groupByRepo && props.isProjectGroup ? (
+        ) : props.icon === 'floating' ? (
+          <Terminal size={12} color={colors.textMuted} style={styles.sectionIcon} />
+        ) : props.groupByRepo && props.isProjectGroup ? (
           <FolderTree size={12} color={colors.textPrimary} style={styles.sectionIcon} />
         ) : props.groupByRepo ? (
           <View style={styles.sectionRepoIcon}>

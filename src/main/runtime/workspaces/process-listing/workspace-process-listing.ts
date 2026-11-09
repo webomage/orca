@@ -10,6 +10,10 @@ import type { RuntimeWorktreePsResult } from '../../../../shared/runtime-worktre
 import type { ResolvedWorktreeSnapshot } from '../catalog/runtime-resolved-worktree-cache'
 import { buildRuntimeWorktreePsSummaries } from './runtime-worktree-ps-summaries'
 import {
+  pruneIdleFloatingWorktreePsSummary,
+  seedFloatingWorktreePsSummary
+} from '../../floating-worktree-ps-summary'
+import {
   buildRuntimeWorktreeSummaryPathIndex,
   createRuntimeWorktreePsSummaryLookup
 } from './runtime-worktree-summary-paths'
@@ -86,6 +90,7 @@ export abstract class OrcaRuntimeWithGetWorktreePs extends RuntimeChatWorkerEven
       resolvedWorktrees,
       platformByRepoId
     })
+    seedFloatingWorktreePsSummary(summaries, this.store)
 
     const getSummary = createRuntimeWorktreePsSummaryLookup(
       summaries,
@@ -138,6 +143,7 @@ export abstract class OrcaRuntimeWithGetWorktreePs extends RuntimeChatWorkerEven
       conversationName: this.orchestrationSenderNames.agentRowNamer(),
       agentList: this.readAgentListPublication()
     })
+    pruneIdleFloatingWorktreePsSummary(summaries)
 
     const sorted = [...summaries.values()].sort(compareWorktreePs)
     // Apply per-host pagination so hosts sorting last cannot disappear behind a global cap (#18104).

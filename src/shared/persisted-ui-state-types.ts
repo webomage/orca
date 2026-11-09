@@ -19,6 +19,7 @@ import type {
   RightSidebarExplorerView,
   RightSidebarTab,
   StatusBarItem,
+  SubagentDisplayMode,
   TaskResumeState,
   ThreadReadFilter,
   TopLevelView,
@@ -114,6 +115,8 @@ export type PersistedUIState = {
   _worktreeCardModeDefaulted?: boolean
   showAgentModels?: boolean
   agentActivityDisplayMode?: AgentActivityDisplayMode
+  showSubagents?: boolean
+  subagentDisplayMode?: SubagentDisplayMode
   workspaceStatuses?: WorkspaceStatusDefinition[]
   workspaceBoardOpacity?: number
   workspaceBoardColumnWidth?: number
