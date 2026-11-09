@@ -5,26 +5,56 @@ import { TERMINAL_ACCESSORY_KEYS, type TerminalAccessoryKey } from './terminal-a
 
 export const TERMINAL_ACCESSORY_LAYOUT_STORAGE_KEY = 'orca:terminal-accessory-layout'
 
+export type EdgeNavigationMode = 'pills' | 'strips' | 'orbs' | 'gamepad' | 'off'
+
 export type TerminalAccessoryLayout = {
   orderedBuiltInIds: string[]
   visibleBuiltInIds: string[]
   directionPadEnabled?: boolean
   tripleTapEnterEnabled?: boolean
   quadTapAltMEnabled?: boolean
+  edgeNavigationMode?: EdgeNavigationMode
+  edgeSwitcherChipHidden?: boolean
 }
 
-function optionalGestureFields(candidate: {
+function optionalExtraFields(candidate: {
   tripleTapEnterEnabled?: unknown
   quadTapAltMEnabled?: unknown
-}): Pick<TerminalAccessoryLayout, 'tripleTapEnterEnabled' | 'quadTapAltMEnabled'> {
+  edgeNavigationMode?: unknown
+  edgeSwitcherChipHidden?: unknown
+}): Pick<
+  TerminalAccessoryLayout,
+  'tripleTapEnterEnabled' | 'quadTapAltMEnabled' | 'edgeNavigationMode' | 'edgeSwitcherChipHidden'
+> {
+  const m = candidate.edgeNavigationMode
+  const mode =
+    m === 'pills' || m === 'strips' || m === 'orbs' || m === 'gamepad' || m === 'off'
+      ? m
+      : undefined
   return {
     ...(candidate.tripleTapEnterEnabled === false ? { tripleTapEnterEnabled: false } : {}),
-    ...(candidate.quadTapAltMEnabled === false ? { quadTapAltMEnabled: false } : {})
+    ...(candidate.quadTapAltMEnabled === false ? { quadTapAltMEnabled: false } : {}),
+    ...(mode !== undefined ? { edgeNavigationMode: mode } : {}),
+    ...(typeof candidate.edgeSwitcherChipHidden === 'boolean'
+      ? { edgeSwitcherChipHidden: candidate.edgeSwitcherChipHidden }
+      : {})
   }
 }
 
 export type TerminalAccessoryLayoutPreference = TerminalAccessoryLayout & {
   version: 2
+}
+
+type LayoutChangeListener = (layout: TerminalAccessoryLayoutPreference) => void
+const layoutChangeListeners = new Set<LayoutChangeListener>()
+
+export function subscribeTerminalAccessoryLayoutChanges(
+  listener: LayoutChangeListener
+): () => void {
+  layoutChangeListeners.add(listener)
+  return () => {
+    layoutChangeListeners.delete(listener)
+  }
 }
 
 function builtInIds(): string[] {
@@ -125,10 +155,13 @@ export function normalizeTerminalAccessoryLayoutPreference(
     directionPadEnabled: 'directionPadEnabled' in value ? value.directionPadEnabled : undefined,
     tripleTapEnterEnabled:
       'tripleTapEnterEnabled' in value ? value.tripleTapEnterEnabled : undefined,
-    quadTapAltMEnabled: 'quadTapAltMEnabled' in value ? value.quadTapAltMEnabled : undefined
+    quadTapAltMEnabled: 'quadTapAltMEnabled' in value ? value.quadTapAltMEnabled : undefined,
+    edgeNavigationMode: 'edgeNavigationMode' in value ? value.edgeNavigationMode : undefined,
+    edgeSwitcherChipHidden:
+      'edgeSwitcherChipHidden' in value ? value.edgeSwitcherChipHidden : undefined
   }
   const builtInSet = new Set(currentBuiltInIds)
-  const gestureFields = optionalGestureFields(candidate)
+  const extraFields = optionalExtraFields(candidate)
 
   if (candidate.version === 2) {
     const orderedInput = stringArray(candidate.orderedBuiltInIds)
@@ -149,7 +182,7 @@ export function normalizeTerminalAccessoryLayoutPreference(
       directionPadEnabled: candidate.directionPadEnabled !== false,
       orderedBuiltInIds: ordered,
       visibleBuiltInIds: ordered.filter((id) => visibleSet.has(id)),
-      ...gestureFields
+      ...extraFields
     }
   }
 
@@ -172,7 +205,7 @@ export function normalizeTerminalAccessoryLayoutPreference(
       directionPadEnabled: candidate.directionPadEnabled !== false,
       orderedBuiltInIds: [...currentBuiltInIds],
       visibleBuiltInIds: currentBuiltInIds.filter((id) => visibleSet.has(id)),
-      ...gestureFields
+      ...extraFields
     }
   }
 
@@ -194,7 +227,7 @@ export function createTerminalAccessoryLayoutPreference(
     directionPadEnabled: layout.directionPadEnabled !== false,
     orderedBuiltInIds: ordered,
     visibleBuiltInIds: ordered.filter((id) => visibleSet.has(id)),
-    ...optionalGestureFields(layout)
+    ...optionalExtraFields(layout)
   }
 }
 
@@ -205,13 +238,13 @@ export function setTerminalAccessoryBuiltInVisible(
   currentBuiltInIds = builtInIds()
 ): TerminalAccessoryLayout {
   const preference = createTerminalAccessoryLayoutPreference(layout, currentBuiltInIds)
-  const gestureFields = optionalGestureFields(preference)
+  const extraFields = optionalExtraFields(preference)
   if (!new Set(currentBuiltInIds).has(id)) {
     return {
       directionPadEnabled: preference.directionPadEnabled,
       orderedBuiltInIds: preference.orderedBuiltInIds,
       visibleBuiltInIds: preference.visibleBuiltInIds,
-      ...gestureFields
+      ...extraFields
     }
   }
   const visibleSet = new Set(preference.visibleBuiltInIds)
@@ -226,7 +259,7 @@ export function setTerminalAccessoryBuiltInVisible(
     visibleBuiltInIds: preference.orderedBuiltInIds.filter((builtInId) =>
       visibleSet.has(builtInId)
     ),
-    ...gestureFields
+    ...extraFields
   }
 }
 
@@ -243,7 +276,7 @@ export function reorderTerminalAccessoryBuiltInIds(
     directionPadEnabled: preference.directionPadEnabled,
     orderedBuiltInIds: preference.orderedBuiltInIds,
     visibleBuiltInIds: preference.visibleBuiltInIds,
-    ...optionalGestureFields(preference)
+    ...optionalExtraFields(preference)
   }
 }
 
@@ -282,5 +315,8 @@ export async function loadTerminalAccessoryLayout(
 export async function saveTerminalAccessoryLayout(layout: TerminalAccessoryLayout): Promise<void> {
   const preference = createTerminalAccessoryLayoutPreference(layout)
   const value = JSON.stringify(preference)
+  for (const listener of layoutChangeListeners) {
+    listener(preference)
+  }
   await persistMirrored(TERMINAL_ACCESSORY_LAYOUT_STORAGE_KEY, value)
 }

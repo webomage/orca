@@ -376,6 +376,8 @@ function MobileFilePreviewDocument({ route }: Props) {
           })
         }
         onRetry={retry}
+        onBack={requestBack}
+        obscured={confirmingDiscard}
         onOpenFile={(pathText) => {
           const href = previewParams && mobileMarkdownFileLink(previewParams, pathText)
           if (href) {

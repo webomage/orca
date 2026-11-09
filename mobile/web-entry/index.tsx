@@ -48,6 +48,7 @@ import {
   awaitFirstPaintRestore,
   startPageQueryPersistence
 } from '../src/query/page-query-persistence'
+import { GlobalEdgeNavigationProvider } from '../src/navigation/edge-arrows/GlobalEdgeNavigationProvider'
 // Body replaced at build time: esbuild has no require.context, so the builder synthesizes one.
 import routeContext from './route-manifest'
 import { preloadBootRoutes } from './boot-route-preload'
@@ -79,9 +80,11 @@ function createRootProviders(
     return (
       <RpcClientProvider client={client}>
         <OrcaQueryProvider client={queryClient}>
-          <RouteScreenPaintProvider report={reportRouteScreenPaint}>
-            {children}
-          </RouteScreenPaintProvider>
+          <GlobalEdgeNavigationProvider>
+            <RouteScreenPaintProvider report={reportRouteScreenPaint}>
+              {children}
+            </RouteScreenPaintProvider>
+          </GlobalEdgeNavigationProvider>
         </OrcaQueryProvider>
       </RpcClientProvider>
     )

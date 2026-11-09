@@ -421,6 +421,7 @@ export function MobileNativeChatView({
             <MobileNativeChatFloatingControls
               showJumpToTail={tail.showJumpToTail}
               onJumpToTail={jumpToTail}
+              onBeginUserScroll={tail.beginUserScroll}
             />
           </GestureHandlerRootView>
         )}
