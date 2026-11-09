@@ -40,6 +40,7 @@ export function installPtyResizeForward(session: ConnectPanePtySession): void {
     if (queuePanePtyResizeIfHeld(session.pane.container, cols, rows)) {
       return
     }
+    session.resizeRepaintHold?.hold()
     session.transport.resize(cols, rows, { claim: true })
   }
 
@@ -88,7 +89,8 @@ export function installPtyResizeForward(session: ConnectPanePtySession): void {
   // Capture only generation and PTY ID here; a deferred reveal closure inside reattach would retain its entire multi-MB payload while hidden.
   session.createReattachGridPush = (
     attemptGeneration: number,
-    reattachPtyId: string
+    reattachPtyId: string,
+    baselineGrid?: { cols: number; rows: number } | null
   ): { shouldContinue: () => boolean; continuation: () => void } => {
     const isCurrent = (): boolean =>
       !session.disposed &&
@@ -106,11 +108,20 @@ export function installPtyResizeForward(session: ConnectPanePtySession): void {
         }
         const reattachCols = session.pane.terminal.cols
         const reattachRows = session.pane.terminal.rows
-        if (reattachCols > 0 && reattachRows > 0) {
-          session.transport.resize(reattachCols, reattachRows)
-        }
-        if (!isRemoteRuntimePtyId(reattachPtyId)) {
-          window.api.pty.signal(reattachPtyId, 'SIGWINCH')
+        const gridUnchanged =
+          baselineGrid != null &&
+          baselineGrid.cols === reattachCols &&
+          baselineGrid.rows === reattachRows
+        if (!gridUnchanged) {
+          if (session.deps.isVisibleRef.current) {
+            session.resizeRepaintHold?.hold()
+          }
+          if (reattachCols > 0 && reattachRows > 0) {
+            session.transport.resize(reattachCols, reattachRows)
+          }
+          if (!isRemoteRuntimePtyId(reattachPtyId)) {
+            window.api.pty.signal(reattachPtyId, 'SIGWINCH')
+          }
         }
         if (session.deps.isVisibleRef.current) {
           session.ptySizeReassertion.request({ fit: false })

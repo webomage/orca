@@ -10,7 +10,6 @@ export function useRestoredBannerTitleSpace({
   paneLayoutRevision,
   paneTitles,
   renamingPaneId,
-  sessionRestoredBannerPaneIds,
   shouldMeasureHiddenStartup
 }: Pick<
   TerminalPaneCloseController,
@@ -20,7 +19,6 @@ export function useRestoredBannerTitleSpace({
   | 'paneLayoutRevision'
   | 'paneTitles'
   | 'renamingPaneId'
-  | 'sessionRestoredBannerPaneIds'
   | 'shouldMeasureHiddenStartup'
 >): void {
   useLayoutEffect(() => {
@@ -31,8 +29,7 @@ export function useRestoredBannerTitleSpace({
     const needsFit = syncSessionRestoredBannerTitleSpace({
       panes: manager.getPanes(),
       paneTitles,
-      renamingPaneId,
-      sessionRestoredBannerPaneIds
+      renamingPaneId
     })
     if (needsFit && (isVisible || shouldMeasureHiddenStartup)) {
       fitPanes(manager)
@@ -42,7 +39,6 @@ export function useRestoredBannerTitleSpace({
     paneLayoutRevision,
     paneTitles,
     renamingPaneId,
-    sessionRestoredBannerPaneIds,
     isVisible,
     shouldMeasureHiddenStartup,
     managerRef

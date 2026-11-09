@@ -3,8 +3,6 @@ import { requestStablePaneFit } from '@/lib/pane-manager/pane-fit-resize-observe
 import type { ConnectPanePtySession } from '../connect-pane-pty-session'
 
 const FOREGROUND_GRID_DRIFT_CHECK_MIN_MS = 250
-// Backstop for drift no resize/reveal signal reports once a probe has matched the fit.
-const FOREGROUND_GRID_DRIFT_SETTLED_RECHECK_MS = 1000
 
 // Repairs xterm grids that drifted from the fit without a pane resize, throttled on foreground output.
 export function installForegroundGridDriftProbe(session: ConnectPanePtySession): void {
@@ -26,14 +24,13 @@ export function installForegroundGridDriftProbe(session: ConnectPanePtySession):
       !session.deps.isVisibleRef.current ||
       session.shouldSuppressDesktopPtyResize() ||
       session.pendingForegroundGridDriftCheckRaf !== null ||
-      (!force && session.terminalSelectionFitGuard?.isActive())
+      (!force &&
+        (session.foregroundGridDriftProbeSettled || session.terminalSelectionFitGuard?.isActive()))
     ) {
       return
     }
     const now = performance.now()
-    const minIntervalMs = session.foregroundGridDriftProbeSettled
-      ? FOREGROUND_GRID_DRIFT_SETTLED_RECHECK_MS
-      : FOREGROUND_GRID_DRIFT_CHECK_MIN_MS
+    const minIntervalMs = FOREGROUND_GRID_DRIFT_CHECK_MIN_MS
     const elapsedMs = now - session.lastForegroundGridDriftCheckAt
     if (!force && elapsedMs < minIntervalMs) {
       // Why: the last write in a burst may land inside the interval; one trailing probe keeps drift from sticking once output stops.

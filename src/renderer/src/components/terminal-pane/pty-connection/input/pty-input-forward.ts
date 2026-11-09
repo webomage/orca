@@ -16,10 +16,12 @@ import {
 } from '../../../../../../shared/terminal/protocol/input-modes/terminal-focus-reports'
 import { isCodexPaneStale } from './codex-pane-stale'
 import { installTerminalSelectionFitGuard } from '../../viewport/terminal-selection-fit-guard'
+import { createPtyResizeRepaintHold } from '../pty-resize-repaint-hold'
 import type { ConnectPanePtySession } from '../connect-pane-pty-session'
 import { recordAdmittedTerminalUserInput } from '@/lib/telemetry'
 
 export function installPtyInputForward(session: ConnectPanePtySession): void {
+  session.resizeRepaintHold = createPtyResizeRepaintHold(session.pane.terminal)
   session.forwardPtyInput = (data: string, wasUserInput = false): void => {
     // During replay, drop query replies and pointer-generated mouse/arrows but preserve typing; stale TUI modes could send reports or recall history in the fresh shell (replay-guard.ts).
     if (
@@ -139,6 +141,9 @@ export function installPtyInputForward(session: ConnectPanePtySession): void {
       return
     }
     session.claimViewportForUserActivity(data)
+    if (wasUserInput) {
+      session.resizeRepaintHold?.releaseNow()
+    }
     if (session.transport.sendInput(data, inputKind)) {
       if (wasUserInput) {
         recordAdmittedTerminalUserInput()

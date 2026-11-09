@@ -81,8 +81,13 @@ export function useTerminalWebViewController(
     pendingMessages.flush(sendToDocument)
   }, [pendingMessages, sendToDocument])
 
+  const writeCoalescerRef = useRef<ReturnType<typeof createTerminalDocumentWrites> | null>(null)
+
   const postMessage = useCallback(
     (msg: TerminalWebViewCommand) => {
+      if (msg.type === 'resize' || msg.type === 'reflow') {
+        writeCoalescerRef.current?.beginResizeBurst()
+      }
       if (!isWebReadyRef.current) {
         pendingMessages.queue(msg)
         return
@@ -97,6 +102,7 @@ export function useTerminalWebViewController(
     () => createTerminalDocumentWrites(postMessage, { coalesce }),
     [coalesce, postMessage]
   )
+  writeCoalescerRef.current = writeCoalescer
 
   useEffect(() => {
     return () => {

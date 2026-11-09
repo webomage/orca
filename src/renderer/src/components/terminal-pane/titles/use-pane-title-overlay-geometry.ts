@@ -16,7 +16,6 @@ export function usePaneTitleOverlayGeometry({
   paneLayoutRevision,
   paneTitles,
   renamingPaneId,
-  sessionRestoredBannerPaneIds,
   setPaneTitleOverlayRects,
   shouldMeasureHiddenStartup
 }: Pick<
@@ -30,7 +29,6 @@ export function usePaneTitleOverlayGeometry({
   | 'paneLayoutRevision'
   | 'paneTitles'
   | 'renamingPaneId'
-  | 'sessionRestoredBannerPaneIds'
   | 'setPaneTitleOverlayRects'
   | 'shouldMeasureHiddenStartup'
 >): void {
@@ -100,7 +98,6 @@ export function usePaneTitleOverlayGeometry({
     paneLayoutRevision,
     paneTitles,
     renamingPaneId,
-    sessionRestoredBannerPaneIds,
     shouldMeasureHiddenStartup,
     syncPaneTitleOverlayRects,
     containerRef,

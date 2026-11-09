@@ -21,7 +21,6 @@ export function useTerminalPaneTitleEffects(controller: TerminalPaneCloseControl
     renamingPaneId,
     renameInputRef,
     renameUserRequestedBlurCommitRef,
-    sessionRestoredBannerPaneIds,
     setPaneTitleOverlayRects,
     setSessionRestoredBannerPaneIds,
     setTabLayout,
@@ -40,7 +39,6 @@ export function useTerminalPaneTitleEffects(controller: TerminalPaneCloseControl
     paneLayoutRevision,
     paneTitles,
     renamingPaneId,
-    sessionRestoredBannerPaneIds,
     shouldMeasureHiddenStartup
   })
 
@@ -54,7 +52,6 @@ export function useTerminalPaneTitleEffects(controller: TerminalPaneCloseControl
     paneLayoutRevision,
     paneTitles,
     renamingPaneId,
-    sessionRestoredBannerPaneIds,
     setPaneTitleOverlayRects,
     shouldMeasureHiddenStartup
   })

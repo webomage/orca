@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
 
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { SYNC_FIT_PANES_EVENT } from '@/constants/terminal'
 import { RetainedPaneHost } from './RetainedPaneHost'
 import { registerTabGroupBody } from './tab-group-body-geometry'
 
@@ -93,4 +94,35 @@ it('retains pane content across group moves and visibility changes using measure
   expect(view.getByRole('textbox')).toBe(input)
   view.unmount()
   expect(disconnect).toHaveBeenCalled()
+})
+it('deduplicates SYNC_FIT_PANES_EVENT across rAF and fallback timers when dimensions stay unchanged', () => {
+  vi.useFakeTimers()
+  const onSyncFit = vi.fn()
+  window.addEventListener(SYNC_FIT_PANES_EVENT, onSyncFit)
+  const view = render(
+    <RetainedPaneHost groupId="left" isVisible fitTerminal>
+      <span />
+    </RetainedPaneHost>
+  )
+  const host = view.container.firstElementChild as HTMLDivElement
+  host.getBoundingClientRect = () => new DOMRect(0, 32, 400, 568)
+
+  act(() => {
+    vi.advanceTimersByTime(200)
+  })
+  expect(onSyncFit).toHaveBeenCalledTimes(1)
+
+  host.getBoundingClientRect = () => new DOMRect(0, 32, 520, 568)
+  anchors[0].getBoundingClientRect = () => new DOMRect(0, 32, 520, 568)
+  act(() => {
+    notifyResize()
+    vi.advanceTimersByTime(16)
+  })
+  act(() => {
+    vi.advanceTimersByTime(200)
+  })
+  expect(onSyncFit).toHaveBeenCalledTimes(2)
+
+  window.removeEventListener(SYNC_FIT_PANES_EVENT, onSyncFit)
+  vi.useRealTimers()
 })
