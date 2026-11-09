@@ -85,16 +85,13 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
             repos.find((r) => r.displayName?.toLowerCase() === rawRepo.toLowerCase()) ??
             repos.find(
               (r) =>
-                r.path
-                  ?.split(/[\\/]/)
-                  .findLast(Boolean)
-                  ?.toLowerCase() === rawRepo.toLowerCase()
+                r.path?.split(/[\\/]/).findLast(Boolean)?.toLowerCase() === rawRepo.toLowerCase()
             ) ??
             null)
           : null
-        const resolvedRepoId = matchedRepo?.id ?? (rawRepo && repos.length === 0 ? rawRepo : undefined)
-        const unmatchedProjectId =
-          rawRepo && repos.length > 0 && !matchedRepo ? rawRepo : undefined
+        const resolvedRepoId =
+          matchedRepo?.id ?? (rawRepo && repos.length === 0 ? rawRepo : undefined)
+        const unmatchedProjectId = rawRepo && repos.length > 0 && !matchedRepo ? rawRepo : undefined
         if (get().activeModal === 'new-workspace-composer') {
           get().closeModal()
         }
@@ -109,6 +106,13 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
         })
       }
     },
+    openOrchestrationDeepLink: (link) => {
+      set({ pendingOrchestrationDeepLink: link })
+      if (link.type === 'orchestration-new') {
+        get().openActivityPage()
+      }
+    },
+    clearPendingOrchestrationDeepLink: () => set({ pendingOrchestrationDeepLink: null }),
     openSkillsSharedLinks: () => {
       get().recordViewVisit('skills')
       set((state) => ({

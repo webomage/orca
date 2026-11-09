@@ -11,6 +11,7 @@ import type { BrowserTabCreateRequest } from '../../shared/browser-tab-create-re
 import type { MarkdownDocument } from '../../shared/file-listing/file-document'
 import type { PersistedUIState } from '../../shared/persisted-ui-state-types'
 import type { WorktreeDeepLink } from '../../shared/worktree-deep-link'
+import type { OrchestrationDeepLink } from '../../shared/orchestration-deep-link'
 import type { TuiAgent } from '../../shared/agent-launch/catalog/tui-agent'
 import type {
   AgentLaunchTabPublishReply,
@@ -104,6 +105,8 @@ export type UiCommandEventApi = {
   consumePendingPluginInstallLink: () => Promise<string | null>
   onOpenWorktreeDeepLink?: (callback: (link: WorktreeDeepLink) => void) => () => void
   consumePendingWorktreeDeepLink?: () => Promise<WorktreeDeepLink | null>
+  onOpenOrchestrationDeepLink?: (callback: (link: OrchestrationDeepLink) => void) => () => void
+  consumePendingOrchestrationDeepLink?: () => Promise<OrchestrationDeepLink | null>
   /** OS "Open With" Markdown/CSV/TSV documents; the local IPC name is retained. */
   onOpenMarkdownFiles: (callback: (documents: MarkdownDocument[]) => void) => () => void
   consumePendingMarkdownFileOpens: () => Promise<MarkdownDocument[]>

@@ -85,6 +85,10 @@ export function registerMainProcessIpcHandlers(): void {
     state.worktreeDeepLinkListenerReady = true
     return state.worktreeDeepLinks.consume()
   })
+  ipcMain.handle('ui:consumePendingOrchestrationDeepLink', () => {
+    state.orchestrationDeepLinkListenerReady = true
+    return state.orchestrationDeepLinks.consume()
+  })
   // Pull delivers cold-start Open With and proves the listener is ready for later pushes.
   ipcMain.handle('ui:consumePendingMarkdownFileOpens', async () => {
     state.osDocumentOpenListenerReady = true

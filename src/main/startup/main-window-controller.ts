@@ -184,6 +184,7 @@ export function openMainWindow(options: { revealOnDidFinishLoad?: boolean } = {}
     // Clear readiness before reload/navigation tears down the old renderer listener.
     state.osDocumentOpenListenerReady = false
     state.worktreeDeepLinkListenerReady = false
+    state.orchestrationDeepLinkListenerReady = false
   }
   window.webContents.on('did-start-loading', resetDocumentListenersOnNavigation)
   window.webContents.on('render-process-gone', resetDocumentListenersOnNavigation)
@@ -192,7 +193,9 @@ export function openMainWindow(options: { revealOnDidFinishLoad?: boolean } = {}
     recordCrashBreadcrumb('main_window_loaded')
     logStartupMilestone('did-finish-load')
     // Reload removes the listener; hold pushes until the fresh renderer pulls to prove readiness.
-    resetDocumentListenersOnNavigation()
+    // Note: deep-link listener readiness is cleared on did-start-loading / render-process-gone
+    // rather than did-finish-load so a renderer that pulls before did-finish-load stays ready.
+    state.osDocumentOpenListenerReady = false
     const currentStore = state.store
     if (currentStore && resolveConsent(currentStore.getSettings()).effective === 'enabled') {
       trackAppOpenedOnce()
@@ -238,6 +241,7 @@ export function openMainWindow(options: { revealOnDidFinishLoad?: boolean } = {}
     if (state.mainWindow === window) {
       state.mainWindow = null
       state.worktreeDeepLinkListenerReady = false
+      state.orchestrationDeepLinkListenerReady = false
       if (state.isServeMode) {
         applyBackgroundActivationPolicy({ serveWithoutDesktopWindow: true, warn: console.warn })
       }

@@ -27,6 +27,8 @@ import {
   selectFolderWorkspaces,
   selectWorktreesByRepo
 } from '@/store/workspaces/catalog/workspace-record-fields'
+import { usePendingOrchestrationDeepLink } from './use-pending-orchestration-deep-link'
+
 
 export default function ActivityPrototypePage(): React.JSX.Element {
   const [query, setQuery] = useState('')
@@ -42,6 +44,7 @@ export default function ActivityPrototypePage(): React.JSX.Element {
   const setCompactMode = useAppStore((s) => s.setAgentsCompactMode)
   const showChildAgents = useAppStore((s) => s.agentsShowChildAgents)
   const setShowChildAgents = useAppStore((s) => s.setAgentsShowChildAgents)
+  usePendingOrchestrationDeepLink()
   const [selectedPaneKey, setSelectedPaneKey] = useState<string | null>(null)
   const [displayedPaneKey, setDisplayedPaneKey] = useState<string | null>(null)
   const [activePortalSlotId, setActivePortalSlotId] =

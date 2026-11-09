@@ -1,3 +1,4 @@
+import { parseOrchestrationDeepLink } from '../../shared/orchestration-deep-link'
 import { isPluginInstallLinkArgument } from '../../shared/plugins/catalog/plugin-install-link'
 import { parseSkillShareId } from '../../shared/skill-share-link'
 import { parseWorktreeDeepLink } from '../../shared/worktree-deep-link'
@@ -7,6 +8,7 @@ export function isRoutedOrcaDeepLink(url: string): boolean {
   return (
     parseSkillShareId(url) !== null ||
     isPluginInstallLinkArgument(url) ||
-    parseWorktreeDeepLink(url) !== null
+    parseWorktreeDeepLink(url) !== null ||
+    parseOrchestrationDeepLink(url) !== null
   )
 }
