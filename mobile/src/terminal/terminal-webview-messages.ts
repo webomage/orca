@@ -6,6 +6,7 @@ export type TerminalFrame = { width: number; height: number }
 export type TerminalWebViewCommand =
   | { type: 'set-interaction-active'; active: boolean }
   | { type: 'set-triple-tap-enter'; id?: number; enabled: boolean }
+  | { type: 'set-quad-tap-alt-m'; id?: number; enabled: boolean }
   | { type: 'ping'; id?: number }
   // `onParsed` survives only an in-process post; a native bridge drops it.
   | { type: 'write'; id?: number; data: string; onParsed?: () => void }

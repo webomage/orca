@@ -70,6 +70,8 @@ export function dispatchTerminalWebViewNotification(
     handlers.onTerminalTap?.()
   } else if (msg.type === 'terminal-triple-tap') {
     handlers.onTerminalTripleTap?.()
+  } else if (msg.type === 'terminal-quad-tap') {
+    handlers.onTerminalQuadTap?.()
   } else if (msg.type === 'terminal-file-tap') {
     const candidates = parseFileTapCandidates(msg.candidates)
     if (candidates.length > 0) {

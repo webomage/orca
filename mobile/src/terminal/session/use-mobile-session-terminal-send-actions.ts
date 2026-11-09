@@ -19,6 +19,7 @@ import { useAgentSendKeyboardDismissal } from './use-agent-send-keyboard-dismiss
 import type { MobileSessionTab } from '../../session/tabs/mobile-session-tabs'
 import { useMobileSessionTabActionSheetOpener } from '../../session/tabs/use-mobile-session-tab-action-targets'
 import { useMobileSessionTerminalTripleTap } from './use-mobile-session-terminal-triple-tap'
+import { useMobileSessionTerminalQuadTap } from './use-mobile-session-terminal-quad-tap'
 import type { MobileSessionTerminalWebviewModel } from './use-mobile-session-terminal-webview'
 import type { TerminalLiveInputSender } from '../terminal-live-input-sender'
 
@@ -244,9 +245,14 @@ export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminal
     handleAccessoryKey
   })
 
+  const handleTerminalQuadTap = useMobileSessionTerminalQuadTap(scope, {
+    handleAccessoryKey
+  })
+
   return {
     handleAccessoryKey,
     handleTerminalTripleTap,
+    handleTerminalQuadTap,
     sendLiveTerminalInput,
     clearSessionTabActionSheetKeyboardListener,
     openSessionTabActionSheet,

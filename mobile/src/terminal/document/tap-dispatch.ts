@@ -4,7 +4,7 @@ import { notify } from './host-notify'
 import { viewportToCell } from './viewport-cell'
 import type { TerminalDocumentScope } from './document-scope'
 import { queuedNormalBufferScrollReachesRow } from './normal-buffer-smooth-scroll'
-import { notifyTerminalSurfaceTap } from './surface-tap'
+import { cancelPendingTripleTap, notifyTerminalSurfaceTap } from './surface-tap'
 import {
   eventTargetInRoot,
   touchesInRoot,
@@ -85,6 +85,7 @@ export function touchSlopExceeded(scope: TerminalDocumentScope, t: Touch) {
 }
 
 export function disqualifyTapGesture(scope: TerminalDocumentScope) {
+  cancelPendingTripleTap(scope)
   scope.tapCandidate = null
   scope.tapStreak = null
 }
@@ -284,5 +285,6 @@ export function stopTapDispatch(scope: TerminalDocumentScope) {
     scope.removeTapDispatch()
     scope.removeTapDispatch = null
   }
+  cancelPendingTripleTap(scope)
   clearLongPress(scope)
 }

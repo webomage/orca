@@ -52,6 +52,7 @@ export function MobileSessionActiveContent({
     setTerminalTextScale,
     terminalTextScaleRevisionRef,
     tripleTapEnterEnabled,
+    quadTapAltMEnabled,
     activeHandle,
     terminalSplitActive,
     visibleTerminalHandles,
@@ -64,9 +65,6 @@ export function MobileSessionActiveContent({
     dictationMode,
     dictationEnabled,
     toastMessage,
-    handleTerminalInteraction,
-    handleTerminalTap,
-    handleTerminalTripleTap,
     browserScreencastSupported,
     showToast,
     nativeChatSendError,
@@ -88,22 +86,8 @@ export function MobileSessionActiveContent({
     copyMarkdownPath,
     discardMarkdownLocalContent,
     saveMarkdownTab,
-    setTerminalWebViewRef,
-    handleTerminalWebReady,
     notifyTerminalFrame,
-    notifyTerminalCellBoxChange,
-    handleFileTap,
     handleNativeChatFileTap,
-    handleTerminalOpenUrl,
-    handleTerminalInput,
-    handleTerminalQueryReply,
-    handleSelectionMode,
-    handleSelectionCopy,
-    handleSelectionEvicted,
-    handleClipboardWrite,
-    handleModesChanged,
-    handleKeyboardAvoidanceMetrics,
-    handleHaptic,
     nativeChatImages,
     nativeChatStructuredComposer,
     activeMarkdownTab,
@@ -300,29 +284,31 @@ export function MobileSessionActiveContent({
             terminalTheme={terminal.terminalTheme}
             textScale={terminalTextScale}
             tripleTapEnterEnabled={tripleTapEnterEnabled}
+            quadTapAltMEnabled={quadTapAltMEnabled}
             onTextScaleChange={(scale) => {
               // Why: pinch-to-zoom reports a new preset; persist it so the size sticks across panes and launches.
               terminalTextScaleRevisionRef.current += 1
               setTerminalTextScale(scale)
               void saveTerminalTextScale(scale)
             }}
-            onRef={setTerminalWebViewRef}
-            onWebReady={handleTerminalWebReady}
-            onCellBoxChange={notifyTerminalCellBoxChange}
-            onSelectionMode={handleSelectionMode}
-            onSelectionCopy={handleSelectionCopy}
-            onSelectionEvicted={handleSelectionEvicted}
-            onClipboardWrite={handleClipboardWrite}
-            onModesChanged={handleModesChanged}
-            onKeyboardAvoidanceMetrics={handleKeyboardAvoidanceMetrics}
-            onHaptic={handleHaptic}
-            onTerminalInput={handleTerminalInput}
-            onTerminalQueryReply={handleTerminalQueryReply}
-            onTerminalInteraction={handleTerminalInteraction}
-            onTerminalTap={handleTerminalTap}
-            onTerminalTripleTap={handleTerminalTripleTap}
-            onFileTap={handleFileTap}
-            onOpenUrl={handleTerminalOpenUrl}
+            onRef={controller.setTerminalWebViewRef}
+            onWebReady={controller.handleTerminalWebReady}
+            onCellBoxChange={controller.notifyTerminalCellBoxChange}
+            onSelectionMode={controller.handleSelectionMode}
+            onSelectionCopy={controller.handleSelectionCopy}
+            onSelectionEvicted={controller.handleSelectionEvicted}
+            onClipboardWrite={controller.handleClipboardWrite}
+            onModesChanged={controller.handleModesChanged}
+            onKeyboardAvoidanceMetrics={controller.handleKeyboardAvoidanceMetrics}
+            onHaptic={controller.handleHaptic}
+            onTerminalInput={controller.handleTerminalInput}
+            onTerminalQueryReply={controller.handleTerminalQueryReply}
+            onTerminalInteraction={controller.handleTerminalInteraction}
+            onTerminalTap={controller.handleTerminalTap}
+            onTerminalTripleTap={controller.handleTerminalTripleTap}
+            onTerminalQuadTap={controller.handleTerminalQuadTap}
+            onFileTap={controller.handleFileTap}
+            onOpenUrl={controller.handleTerminalOpenUrl}
           />
         ))}
         <MobileNativeChatDictationPreviewContext.Provider value={chatDictationPreview}>

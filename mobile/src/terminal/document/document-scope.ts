@@ -98,6 +98,8 @@ export type TerminalDocumentState = {
   longPressOrigin: TerminalDocumentTouchOrigin | null
   interactionActive: boolean
   tripleTapEnterEnabled: boolean
+  quadTapAltMEnabled: boolean
+  pendingTripleTapTimer: ReturnType<typeof setTimeout> | null
   tapCandidate: TerminalDocumentTapCandidate | null
   tapStreak: TerminalDocumentTapStreak | null
   bottomRowBackdrop: string
@@ -233,6 +235,8 @@ function createTerminalDocumentState(): TerminalDocumentState {
     longPressOrigin: null,
     interactionActive: true,
     tripleTapEnterEnabled: true,
+    quadTapAltMEnabled: true,
+    pendingTripleTapTimer: null,
     tapCandidate: null,
     tapStreak: null,
     wheelAccumDeltaY: 0,

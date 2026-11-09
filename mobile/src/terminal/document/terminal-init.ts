@@ -1,7 +1,7 @@
 import { parseTerminalKittyKeyboardFlags } from '../../../../src/shared/terminal/protocol/input-modes/terminal-kitty-keyboard-flags'
 import { resetSmoothScrollOffset } from './normal-buffer-smooth-scroll'
 import { stopSurfaceTouchGestures } from './surface-touch-gestures'
-import { clearLongPress } from './tap-dispatch'
+import { clearLongPress, disqualifyTapGesture } from './tap-dispatch'
 import { emitKeyboardAvoidanceMetrics } from './keyboard-avoidance-metrics'
 import { MOBILE_TERMINAL_CARET_OPTIONS } from '../terminal-webview-html/theme'
 import { ESC } from './escape-introducers'
@@ -106,7 +106,7 @@ export function init(
   stopSurfaceTouchGestures(scope)
   resetSmoothScrollOffset(scope)
   clearLongPress(scope)
-  scope.tapCandidate = null
+  disqualifyTapGesture(scope)
   if (typeof nextFontScale === 'number' && nextFontScale > 0) {
     scope.currentTextScale = nextFontScale
   }

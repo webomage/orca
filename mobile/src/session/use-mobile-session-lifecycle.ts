@@ -26,6 +26,7 @@ export function useMobileSessionLifecycle(scope: MobileSessionTabReconciliationM
     setVisibleBuiltInIds,
     setDirectionPadEnabled,
     setTripleTapEnterEnabled,
+    setQuadTapAltMEnabled,
     setHostEndpoint,
     setHostName,
     connStateRef,
@@ -103,6 +104,7 @@ export function useMobileSessionLifecycle(scope: MobileSessionTabReconciliationM
           setVisibleBuiltInIds(layout.visibleBuiltInIds)
           setDirectionPadEnabled(layout.directionPadEnabled !== false)
           setTripleTapEnterEnabled(layout.tripleTapEnterEnabled !== false)
+          setQuadTapAltMEnabled(layout.quadTapAltMEnabled !== false)
         }
         setAccessoryLayoutLoaded(true)
       }

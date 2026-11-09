@@ -31,6 +31,7 @@ type TerminalPaneViewProps = {
   terminalTheme?: MobileTerminalTheme
   textScale: number
   tripleTapEnterEnabled?: boolean
+  quadTapAltMEnabled?: boolean
   onRef: (handle: string, ref: TerminalWebViewHandle | null) => void
   onWebReady: (handle: string) => void
   onSelectionMode: (handle: string, active: boolean) => void
@@ -45,6 +46,7 @@ type TerminalPaneViewProps = {
   onTerminalInteraction: (handle: string) => void
   onTerminalTap: (handle: string) => void
   onTerminalTripleTap?: (handle: string) => void
+  onTerminalQuadTap?: (handle: string) => void
   onFileTap: (handle: string, candidates: readonly ParsedFileLinkLocation[]) => void
   onOpenUrl: (handle: string, url: string) => void
   onTextScaleChange: (scale: number) => void
@@ -65,6 +67,7 @@ export function TerminalPaneView({
   terminalTheme,
   textScale,
   tripleTapEnterEnabled = true,
+  quadTapAltMEnabled = true,
   onRef,
   onWebReady,
   onSelectionMode,
@@ -79,6 +82,7 @@ export function TerminalPaneView({
   onTerminalInteraction,
   onTerminalTap,
   onTerminalTripleTap,
+  onTerminalQuadTap,
   onFileTap,
   onOpenUrl,
   onTextScaleChange,
@@ -185,6 +189,7 @@ export function TerminalPaneView({
             shownAtMount={visible}
             interactionActive={visible && appActive && routeFocused}
             tripleTapEnterEnabled={tripleTapEnterEnabled}
+            quadTapAltMEnabled={quadTapAltMEnabled}
             onWebReady={() => onWebReady(handle)}
             onSelectionMode={(a) => onSelectionMode(handle, a)}
             onSelectionCopy={(t) => onSelectionCopy(handle, t)}
@@ -200,6 +205,7 @@ export function TerminalPaneView({
             onTerminalTripleTap={
               onTerminalTripleTap ? () => onTerminalTripleTap(handle) : undefined
             }
+            onTerminalQuadTap={onTerminalQuadTap ? () => onTerminalQuadTap(handle) : undefined}
             onFileTap={(candidates) => onFileTap(handle, candidates)}
             onOpenUrl={(url) => onOpenUrl(handle, url)}
             onTextScaleChange={onTextScaleChange}
