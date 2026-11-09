@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useEffectiveMobileTerminalTheme } from './resolve-mobile-terminal-theme'
 import { readTerminalCellBox, type TerminalCellBox } from './terminal-cell-box'
 import type { TerminalWebViewProps } from './terminal-webview-contract'
 import { useTerminalWebViewEngineErrorState } from './terminal-webview-engine-error-state'
@@ -27,7 +28,7 @@ export function useTerminalWebViewController(
   transport: TerminalWebViewTransport
 ) {
   const {
-    terminalTheme,
+    terminalTheme: rawTerminalTheme,
     interactionActive = true,
     tripleTapEnterEnabled = true,
     quadTapAltMEnabled = true,
@@ -53,6 +54,7 @@ export function useTerminalWebViewController(
     onCellBoxChange
   } = props
   const { coalesce, pingsOnForegroundRecovery, post } = transport
+  const terminalTheme = useEffectiveMobileTerminalTheme(rawTerminalTheme)
   const isWebReadyRef = useRef(false)
   const sentTripleTapEnterRef = useRef<boolean>(true)
   const sentQuadTapAltMRef = useRef<boolean>(true)
