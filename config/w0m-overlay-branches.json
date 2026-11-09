@@ -14,7 +14,7 @@
     },
     {
       "branch": "feat/nested-subfolder-git-and-sdlc-repo",
-      "description": "Auto-discover .w0m/sdlc.json and nested subfolder git repos under origin/Project modes and support manual owner/repo mapping"
+      "description": "Auto-discover .w0m/sdlc.json and nested subfolder git repos under origin/Project modes, support manual owner/repo mapping, and nest subfolder repos as expandable sections under umbrella repos"
     },
     {
       "branch": "feat/mobile-session-tab-reorder",
