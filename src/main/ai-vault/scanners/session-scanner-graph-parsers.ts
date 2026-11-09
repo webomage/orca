@@ -166,7 +166,7 @@ function rovoTextParts(parts: unknown[], role: 'user' | 'assistant'): string[] {
   return textParts
 }
 
-export type MessageGraphAgent = 'openclaw' | 'pi' | 'omp' | 'prime-agent'
+export type MessageGraphAgent = 'openclaw' | 'zeroclaw' | 'pi' | 'omp' | 'prime-agent'
 
 export async function parseMessageGraphSessionFile(
   agent: MessageGraphAgent,

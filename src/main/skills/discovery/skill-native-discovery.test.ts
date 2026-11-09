@@ -521,4 +521,35 @@ describe('skill discovery', () => {
 
     expect(result.skills.map((skill) => skill.name)).not.toContain('Too Deep')
   })
+
+  it('discovers ZeroClaw skills across canonical locations', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'orca-skills-'))
+    const home = join(root, 'home')
+    const homeSkill = join(home, '.zeroclaw', 'skills', 'zc-home')
+    const dataSkill = join(home, '.zeroclaw', 'data', 'skills', 'zc-data')
+    const sharedSkill = join(home, '.zeroclaw', 'shared', 'skills', 'zc-shared')
+    const wsSkill = join(home, '.zeroclaw', 'workspace', 'skills', 'zc-workspace')
+
+    for (const dir of [homeSkill, dataSkill, sharedSkill, wsSkill]) {
+      await mkdir(dir, { recursive: true })
+      await writeFile(
+        join(dir, 'SKILL.md'),
+        ['---', `name: ${join(dir).split(/[\\/]/).pop()}`, 'description: A skill.', '---', ''].join(
+          '\n'
+        )
+      )
+    }
+
+    const result = await discoverSkills({
+      homeDir: home,
+      cwd: join(root, 'missing-cwd'),
+      repos: []
+    })
+
+    const names = result.skills.map((s) => s.name)
+    expect(names).toContain('zc-home')
+    expect(names).toContain('zc-data')
+    expect(names).toContain('zc-shared')
+    expect(names).toContain('zc-workspace')
+  })
 })

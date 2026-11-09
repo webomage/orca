@@ -31,6 +31,7 @@ export const SELF_CONTAINED_TRANSCRIPT_AGENTS = {
   hermes: true,
   rovo: false, // session_context.json supplies messages.
   openclaw: true,
+  zeroclaw: true,
   pi: true,
   omp: true,
   'prime-agent': true,

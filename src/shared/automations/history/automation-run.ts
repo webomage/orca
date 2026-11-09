@@ -26,7 +26,7 @@ export function isFinalAutomationRunStatus(status: AutomationRunStatus): boolean
   )
 }
 
-export type AutomationRunUsageProvider = 'claude' | 'codex'
+export type AutomationRunUsageProvider = 'claude' | 'codex' | 'zeroclaw'
 
 export type AutomationRunUsageStatus = 'known' | 'unavailable'
 
