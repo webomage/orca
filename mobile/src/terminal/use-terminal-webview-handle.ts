@@ -109,7 +109,15 @@ export function useTerminalWebViewHandle({
       doSelectAll() {
         postMessage({ type: 'do-select-all' })
       },
-      awaitReady: promises.awaitReady
+      awaitReady: promises.awaitReady,
+      readPromptBackload() {
+        return promises.awaitPromptBackload(() => {
+          if (!writeCoalescer.isHoldingSynchronizedOutput()) {
+            writeCoalescer.flushNow()
+          }
+          postMessage({ type: 'read-prompt-backload' })
+        })
+      }
     }),
     [
       armWebReadyWatchdog,

@@ -39,6 +39,7 @@ export function useMobileSessionTerminalWebview(scope: MobileSessionTabSwitching
     showNativeChat,
     switchTab,
     handleTerminalTap: focusTerminalTap,
+    requestTerminalPromptBackload,
     pendingSelectionRef,
     activeSessionTab,
     unsubscribeTerminal,
@@ -232,10 +233,11 @@ export function useMobileSessionTerminalWebview(scope: MobileSessionTabSwitching
         focusFrameRef.current = null
         if (activeHandleRef.current === handle) {
           focusTerminalTap(handle)
+          void requestTerminalPromptBackload(handle)
         }
       })
     },
-    [focusTerminalTap, handleTerminalInteraction]
+    [focusTerminalTap, handleTerminalInteraction, requestTerminalPromptBackload]
   )
   useEffect(
     () => () => {
