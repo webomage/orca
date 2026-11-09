@@ -33,6 +33,10 @@ export const MARKDOWN_DOCUMENT_LISTING_ARGS = [
   '--glob',
   '**/.github/',
   '--glob',
+  '**/.tasks/',
+  '--glob',
+  '**/.agents/',
+  '--glob',
   '!**/node_modules/',
   '.'
 ]

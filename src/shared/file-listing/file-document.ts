@@ -3,6 +3,7 @@ export type FileDocument = {
   relativePath: string
   basename: string
   name: string
+  aliases?: string[]
 }
 
 export type MarkdownDocument = FileDocument
