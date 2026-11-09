@@ -42,7 +42,7 @@
     },
     {
       "branch": "feat/mobile-live-input-password-mask",
-      "description": "Asterisk password masking and show/hide toggle in mobile terminal dock"
+      "description": "Asterisk password masking and leading Live Input show/hide toggle in mobile terminal dock"
     },
     {
       "branch": "feat/macos-deep-link-worktree",
