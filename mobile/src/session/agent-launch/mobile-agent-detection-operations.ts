@@ -1,7 +1,11 @@
 import { bindDeferredRpcOperation, defineRpcOperation } from '../../transport/rpc/rpc-operation'
 import { rpcResultVariant } from '../../transport/rpc/rpc-operation-result-reader'
 import '../../terminal/terminal-reply-schema'
-import { detectedAgentsSchema, refreshedAgentsSchema } from './mobile-agent-detection-reply-schema'
+import {
+  detectedAgentsSchema,
+  detectedSystemMonitorsSchema,
+  refreshedAgentsSchema
+} from './mobile-agent-detection-reply-schema'
 import '../../files/session-documents/mobile-markdown-tab-reply-schema'
 import '../../transport/rpc/rpc-uninterpreted-reply-schemas'
 import '../../terminal/session/mobile-session-terminal-reply-schema'
@@ -38,5 +42,15 @@ export const preflightDetectRemoteAgentsRead = bindDeferredRpcOperation(
     acceptance: 'require-result-or-throw-message',
     barrier: 'after-caller-barrier',
     read: rpcResultVariant('detected-agents', detectedAgentsSchema)
+  })
+)
+
+export const preflightDetectMonitorsRead = bindDeferredRpcOperation(
+  defineRpcOperation({
+    name: 'preflight.detect-monitors',
+    method: 'preflight.detectMonitors',
+    acceptance: 'require-result-or-throw-message',
+    barrier: 'after-caller-barrier',
+    read: rpcResultVariant('detected-monitors', detectedSystemMonitorsSchema)
   })
 )

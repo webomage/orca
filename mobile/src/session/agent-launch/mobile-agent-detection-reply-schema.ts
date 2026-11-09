@@ -9,6 +9,8 @@ export const runtimeRepoListSchema = z
 // Require the array before option construction spreads it; isMobileTuiAgent filters individual entries.
 export const detectedAgentsSchema = z.array(z.unknown())
 
+export const detectedSystemMonitorsSchema = z.array(z.string())
+
 /** `preflight.refreshAgents` wraps the same list with PATH diagnostics the drawer never reads. */
 export const refreshedAgentsSchema = z
   .looseObject({ agents: detectedAgentsSchema })
