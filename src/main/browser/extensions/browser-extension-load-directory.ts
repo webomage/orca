@@ -194,7 +194,10 @@ async function prepare(
     await cp(extension.path, directory, {
       recursive: true,
       dereference: true,
-      filter: (source) => basename(source) !== '.git'
+      filter: (source) => {
+        const name = basename(source)
+        return name !== '.git' && name !== 'node_modules'
+      }
     })
   }
   const originalPath = join(directory, BROWSER_EXTENSION_ORIGINAL_MANIFEST_FILE)

@@ -38,6 +38,7 @@ export type RuntimeClientSettings = Pick<
   | 'sourceControlGroupOrder'
   | 'sourceControlCompareAgainstUpstream'
   | 'diffShowWhitespace'
+  | 'experimentalBrowserExtensions'
 > & {
   hostSettingOverrides: RuntimeHostDisplayLabelOverrides
   sourceControlAi: RuntimeClientSourceControlAi
@@ -56,6 +57,7 @@ export type RuntimeClientSettingsUpdate = Pick<
   | 'agentStatusHooksEnabled'
   | 'claudeSubagentNavigationEnabled'
   | 'experimentalConnectors'
+  | 'experimentalBrowserExtensions'
   | 'defaultTuiAgent'
   | 'disabledTuiAgents'
   | 'agentDefaultArgs'

@@ -120,6 +120,28 @@ describe('extension load directories', () => {
     expect(refreshed.directory).toBe(first.directory)
   })
 
+  it('skips node_modules and .git when copying an unpacked extension directory', async () => {
+    const source = join(mocks.userData, 'dev', 'with-node-modules')
+    writeExtension(source, {
+      manifest_version: 3,
+      name: 'W0M Assistant',
+      version: '0.1.0',
+      background: { service_worker: 'bg.js', type: 'module' }
+    })
+    mkdirSync(join(source, 'node_modules', 'some-pkg'), { recursive: true })
+    writeFileSync(join(source, 'node_modules', 'some-pkg', 'index.js'), 'module.exports = 1')
+    mkdirSync(join(source, '.git'), { recursive: true })
+    writeFileSync(join(source, '.git', 'HEAD'), 'ref: refs/heads/main')
+
+    const prepared = await prepareBrowserExtensionDirectory(
+      { source: 'unpacked', path: source },
+      { refresh: true }
+    )
+    expect(existsSync(join(prepared.directory, 'node_modules'))).toBe(false)
+    expect(existsSync(join(prepared.directory, '.git'))).toBe(false)
+    expect(existsSync(join(prepared.directory, 'bg.js'))).toBe(true)
+  })
+
   it('runs Orca’s content script first in every isolated-world content script', async () => {
     const source = join(mocks.userData, 'dev', 'content-scripts')
     const content_scripts = [
