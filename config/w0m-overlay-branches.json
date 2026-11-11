@@ -91,6 +91,10 @@
     {
       "branch": "perf/terminal-chat-redraw-and-tab-caching",
       "description": "Throttle unattended/synchronized PTY redraws, treat Native Chat cover as hidden for PTY/WebGL, pause backgrounded chat pacing, and bound warm desktop/mobile tab LRU caches"
+    },
+    {
+      "branch": "fix/mobile-take-back-all-and-browser-resize",
+      "description": "Reclaim all split terminals and mobile-driven browsers on Take back all, reassert split PTY sizes post-suppression, and auto-resize reclaimed browser tabs without refresh"
     }
   ]
 }
