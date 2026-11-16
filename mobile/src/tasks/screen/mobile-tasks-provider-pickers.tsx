@@ -8,20 +8,17 @@ import {
   githubKindFromQuery,
   normalizeLinearFilter
 } from '../item-detail/mobile-tasks-item-mapping'
-import {
-  repositoryCount,
-  getRepoBadgeColor,
-  getTaskRepoDetail
-} from '../repositories/mobile-tasks-repository-presentation'
 import { issueSourceSlug } from '../item-detail/mobile-tasks-reviewer-linear'
 import { GITHUB_KIND_OPTIONS } from '../task-list/mobile-tasks-options'
 import { getTaskPresetQuery } from '../../../../src/shared/work-items/task-preset-query'
 import { scopeGitHubTaskSearch } from '../../../../src/shared/work-items/task-github-search'
-import { LIST_LEADING_INSET, ListGroup, ListRow } from '../../components/list/ListGroup'
+import { ListGroup, ListRow } from '../../components/list/ListGroup'
 import { styles } from '../mobile-tasks-legacy-styles'
 import { normalizeJiraFilter } from '../providers/jira/mobile-jira-issue-filters'
 import { translate as t } from '../../i18n/mobile-i18n'
 import { pressedStyle } from '../../theme/mobile-theme'
+
+export { renderMobileTasksRepoPicker } from './MobileTasksRepoPicker'
 
 // Restores the provider's last view and query so switching sources round-trips.
 export function selectMobileTasksProvider(model: ConnectionPresentationModel, next: TaskProvider) {
@@ -80,59 +77,7 @@ export function selectMobileTasksProvider(model: ConnectionPresentationModel, ne
   }
 }
 
-export function renderMobileTasksRepoPicker(model: ConnectionPresentationModel) {
-  const {
-    hostedRepos,
-    persistRepoSelection,
-    effectiveRepoIds,
-    repoHostLabels,
-    setSelectedRepoIds,
-    setShowRepoPicker,
-    showRepoPicker,
-    taskUiReady,
-    toggleRepoSelection
-  } = model
-  return (
-    <BottomDrawer visible={taskUiReady && showRepoPicker} onClose={() => setShowRepoPicker(false)}>
-      <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>{t('tasks.providerPickers.repos', 'Repositories')}</Text>
-        <Text style={styles.sheetSubtitle}>
-          {t('tasks.providerPickers.repoDescription', 'Choose which repositories to query.')}
-        </Text>
-      </View>
-
-      <ListGroup separatorInset={LIST_LEADING_INSET}>
-        <ListRow
-          key="all"
-          title={t('tasks.providerPickers.allRepositories', 'All repositories')}
-          subtitle={repositoryCount(hostedRepos.length)}
-          // An empty slot keeps the title in line with the repository names below.
-          leading={<View />}
-          selected={effectiveRepoIds.size === 0}
-          accessibilityRole="checkbox"
-          onPress={() => {
-            const allSelection = new Set<string>()
-            setSelectedRepoIds(allSelection)
-            persistRepoSelection(allSelection, hostedRepos)
-          }}
-        />
-        {hostedRepos.map((repo) => (
-          <ListRow
-            key={repo.id}
-            title={repo.displayName}
-            subtitle={getTaskRepoDetail(repo, repoHostLabels)}
-            leading={
-              <View style={[styles.pickerRepoDot, { backgroundColor: getRepoBadgeColor(repo) }]} />
-            }
-            selected={effectiveRepoIds.has(repo.id)}
-            accessibilityRole="checkbox"
-            onPress={() => toggleRepoSelection(repo.id)}
-          />
-        ))}
-      </ListGroup>
-    </BottomDrawer>
-  )
-}
+// Restores the provider's last view and query so switching sources round-trips.
 
 export function renderMobileTasksGitHubIssueSourcePicker(model: ConnectionPresentationModel) {
   const {

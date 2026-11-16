@@ -1,4 +1,5 @@
 import type { GitHubRepositoryIdentity as GitHubApiRepository } from '../../../shared/github/repositories/repository-identity'
+export type { GitHubApiRepository }
 import type { GhAccountBinding } from '../../../shared/github/accounts/account-binding'
 import {
   withGitHubRepoExecution,
@@ -25,6 +26,11 @@ import {
   getGitHubApiRepositoryForRemote,
   getOriginGitHubApiRepository
 } from './github-api-repository-remote-probe'
+import {
+  readLocalIssueRepositoryOverride,
+  resolveNestedPrRepositoryFallback,
+  resolveSdlcOrNestedIssueRepository
+} from '../sdlc-issue-repository'
 export type GitHubRepoExecOptions = ReturnType<typeof ghRepoExecOptions> & {
   host?: string
   env?: NodeJS.ProcessEnv
@@ -41,6 +47,12 @@ export async function getIssueGitHubApiRepository(
   localGitOptions: LocalGitExecOptions = {}
 ): Promise<GitHubApiRepository | null> {
   return withGitHubRepoExecution(repoPath, connectionId, localGitOptions, async () => {
+    if (!connectionId) {
+      const localOverride = await readLocalIssueRepositoryOverride(repoPath)
+      if (localOverride) {
+        return localOverride
+      }
+    }
     const originPromise = getOriginGitHubApiRepository(
       repoPath,
       connectionId,
@@ -64,7 +76,25 @@ export async function getIssueGitHubApiRepository(
     if (origin.status === 'rejected') {
       throw origin.reason
     }
-    return origin.value
+    return resolveSdlcOrNestedIssueRepository({
+      repoPath,
+      origin: origin.value,
+      connectionId,
+      probeRemote: async (targetPath, remoteName) => {
+        if (
+          remoteName === 'upstream' &&
+          !(await shouldProbeGitRemote(targetPath, 'upstream', connectionId, localGitOptions))
+        ) {
+          return null
+        }
+        return getGitHubApiRepositoryForRemote(
+          targetPath,
+          remoteName,
+          connectionId,
+          localGitOptions
+        )
+      }
+    })
   })
 }
 
@@ -103,10 +133,32 @@ export async function resolveGitHubApiRepositoryCandidates(
     if (originResult.status === 'rejected') {
       throw originResult.reason
     }
-    const origin = originResult.value
+    const nestedFallback = await resolveNestedPrRepositoryFallback({
+      repoPath,
+      origin: originResult.value,
+      connectionId,
+      probeRemote: async (targetPath, remoteName) => {
+        if (
+          remoteName === 'upstream' &&
+          !(await shouldProbeGitRemote(targetPath, 'upstream', connectionId, localGitOptions))
+        ) {
+          return null
+        }
+        return getGitHubApiRepositoryForRemote(
+          targetPath,
+          remoteName,
+          connectionId,
+          localGitOptions,
+          {
+            requireVerifiedSshProbe: true
+          }
+        )
+      }
+    })
+    const origin = nestedFallback.originCandidate ?? originResult.value
     const seen = new Set<string>()
     const candidates: GitHubApiRepository[] = []
-    for (const candidate of [upstream, origin]) {
+    for (const candidate of [upstream ?? nestedFallback.upstreamCandidate, origin]) {
       if (!candidate) {
         continue
       }
@@ -148,8 +200,27 @@ export async function resolveIssueGitHubApiRepositorySource(
       return { source: origin, fellBack: origin !== null }
     }
     if (preference === 'origin') {
+      const origin = await getOriginGitHubApiRepository(repoPath, connectionId, localGitOptions)
       return {
-        source: await getOriginGitHubApiRepository(repoPath, connectionId, localGitOptions),
+        source: await resolveSdlcOrNestedIssueRepository({
+          repoPath,
+          origin,
+          connectionId,
+          probeRemote: async (targetPath, remoteName) => {
+            if (
+              remoteName === 'upstream' &&
+              !(await shouldProbeGitRemote(targetPath, 'upstream', connectionId, localGitOptions))
+            ) {
+              return null
+            }
+            return getGitHubApiRepositoryForRemote(
+              targetPath,
+              remoteName,
+              connectionId,
+              localGitOptions
+            )
+          }
+        }),
         fellBack: false
       }
     }

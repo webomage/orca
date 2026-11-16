@@ -11,6 +11,10 @@ import type { Repo } from '../../../../shared/repository/repo-types'
 import type { DeviceScope } from '../../../../shared/remote-runtime/session-graph/runtime-session-contracts'
 import { getRepoSlug, getRepoUpstream } from '../../../github/client/fetch/repo-slug-upstream'
 import {
+  isGovernanceWrapperRepository,
+  resolveSdlcOrNestedIssueRepository
+} from '../../../github/sdlc-issue-repository'
+import {
   admissionTierForRefreshReason,
   bypassesFreshnessDelay
 } from '../../../github/pull-requests/refresh/pr-refresh-candidate-policy'
@@ -62,9 +66,37 @@ export class RuntimeHostedReviewCommands {
     const repo = await this.deps.resolveRepo(repoSelector)
     const options = this.deps.getExecutionOptions(repo)
     const connectionId = hostedReviewSshConnectionId(getStoredRepoExecutionHostId(repo))
-    return options
-      ? getRepoSlug(repo.path, connectionId, options)
-      : getRepoSlug(repo.path, connectionId)
+    const slug = options
+      ? await getRepoSlug(repo.path, connectionId, options)
+      : await getRepoSlug(repo.path, connectionId)
+    if (slug && !isGovernanceWrapperRepository(slug)) {
+      return slug
+    }
+    if (repo.issueRepository?.owner && repo.issueRepository.repo) {
+      return {
+        owner: repo.issueRepository.owner,
+        repo: repo.issueRepository.repo,
+        ...(repo.issueRepository.host ? { host: repo.issueRepository.host } : {})
+      }
+    }
+    if (connectionId) {
+      return slug
+    }
+    return resolveSdlcOrNestedIssueRepository({
+      repoPath: repo.path,
+      origin: slug,
+      connectionId,
+      probeRemote: (targetPath, remoteName) => {
+        if (remoteName === 'upstream') {
+          return options
+            ? getRepoUpstream(targetPath, connectionId, options)
+            : getRepoUpstream(targetPath, connectionId)
+        }
+        return options
+          ? getRepoSlug(targetPath, connectionId, options)
+          : getRepoSlug(targetPath, connectionId)
+      }
+    })
   }
 
   async getRepoUpstream(repoSelector: string): Promise<GitHubOwnerRepo | null> {
